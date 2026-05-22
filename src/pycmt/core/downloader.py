@@ -42,7 +42,7 @@ def download_gadm_country(iso_code, file_format="shp"):
     
     iso_code = iso_code.upper()
     filename = f"{iso_code}_adm.zip"
-    save_directory = Path.cwd().resolve().parents[3] / "data" / "gis_resources" / "countries"
+    save_directory = Path(__file__).resolve().parents[3] / "data" / "gis_resources" / "countries"
     full_save_path = os.path.join(save_directory, filename)
     # 1. VERIFICATION : Si le dossier existe, on s'arrête ici
     if os.path.exists(full_save_path):
@@ -85,7 +85,7 @@ def download_gadm_country(iso_code, file_format="shp"):
 def rename_country_shapefiles(country_iso):
 
     #folder = Path(shpfolder)
-    folder = Path.cwd().resolve().parents[3] / "data" / "gis_resources" / "countries" / f"{country_iso}_adm"
+    folder = Path(__file__).resolve().parents[3] / "data" / "gis_resources" / "countries" / f"{country_iso}_adm"
     expected_final_file = folder / f"{country_iso}_adm0.shp"
     if os.path.exists(expected_final_file):
         print(f"##################################################")
