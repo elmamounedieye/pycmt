@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pycmt-wpc"
+version = "0.1.0"
+description = "Python Climate Monitoring Tools"
+authors = [
+    {name = "Mouhamed El Mamoune Dieye"}
+]
+
+dependencies = [
+    "affine",
+    "Cartopy",
+    "cdo",
+    "cftime",
+    "dask",
+    "geopandas",
+    "Jinja2",
+    "matplotlib",
+    "netCDF4",
+    "numba",
+    "numpy",
+    "openpyxl",
+    "pandas",
+    "pyogrio",
+    "pyproj",
+    "pyshp",
+    "PyYAML",
+    "rasterio",
+    "requests",
+    "rioxarray",
+    "scipy",
+    "shapely",
+    "xarray",
+    "xgrads"
+]

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyCMT - {{ country }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --sidebar-width: 260px; --accent-color: #3498db; --hover-bg: #34495e; }
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', sans-serif; margin: 0; height: 100vh; overflow: hidden; }
+        
+        /* Sidebar */
+        .sidebar { width: var(--sidebar-width); height: 100vh; background: #1a252f; color: white; padding: 20px; position: fixed; left: 0; top: 0; z-index: 1000; }
+        .sidebar h5 { color: var(--accent-color); font-size: 1.1rem; border-bottom: 1px solid #34495e; padding-bottom: 15px; margin-bottom: 25px; }
+
+        /* Menu de navigation par boutons */
+        .nav-menu { display: flex; flex-direction: column; gap: 8px; }
+        .nav-item { 
+            background: transparent; border: none; color: #bdc3c7; text-align: left; 
+            padding: 12px 10px; border-radius: 8px; font-size: 0.85rem; cursor: pointer;
+            transition: all 0.2s ease; display: flex; align-items: center;
+        }
+        .nav-item:hover { background: var(--hover-bg); color: white; }
+        .nav-item.active { background: var(--accent-color); color: white; font-weight: 600; }
+
+        /* Main Layout */
+        .main-content { margin-left: var(--sidebar-width); height: 100vh; display: flex; flex-direction: column; }
+
+        /* Zone d'affichage */
+        .scroll-area { 
+            flex-grow: 1; 
+            overflow-y: auto; 
+            padding: 20px; 
+            display: flex;             
+            flex-direction: column;    
+            justify-content: flex-start; 
+            align-items: center;       
+            background: #f8f9fa;
+        }
+
+        /* Conteneur de la grille */
+        .matrix-container { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            width: 100%;               
+            max-width: 1300px;         
+            margin: 0 auto;
+        }
+
+        /* CONFIGURATION RIGUREUSE DU TABLEAU (HEADER & ROW ALIGNMENT) */
+        .matrix-header, .matrix-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 15px;                /* Espace identique entre chaque colonne */
+            padding: 15px 25px;       /* Marges internes identiques au pixel près */
+            width: 100%;
+        }
+
+        .matrix-header {
+            background: transparent;
+            margin-bottom: -5px;      /* Rapproche légèrement les titres des cartes */
+        }
+
+        /* Alignement parfait de la première colonne (Labels) */
+        .header-blank, .row-label {
+            width: 140px;             /* Largeur identique stricte */
+            flex-shrink: 0;
+        }
+
+        .row-label { 
+            font-weight: 700; 
+            font-size: 0.85rem; 
+            color: #2c3e50; 
+            text-transform: uppercase; 
+            text-align: left; 
+            border-right: 3px solid #e2e8f0;
+            padding-right: 15px;
+        }
+
+        /* Alignement parfait des colonnes de données (Titres & Cartes) */
+        .column-title, .thumb-box {
+            width: 150px;             /* Largeur identique stricte pour chaque carte et son titre */
+            flex-shrink: 0;
+        }
+
+        .column-title {
+            text-align: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        /* Style des lignes de cartes */
+        .matrix-row { 
+            background: #ffffff; 
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03); 
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .matrix-row:hover { 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); 
+        }
+        
+        .zoomable { 
+            width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; cursor: zoom-in; 
+            transition: all 0.2s ease; background: #fff;
+        }
+        .zoomable:hover { transform: scale(1.03); border-color: var(--accent-color); }
+
+        /* Miniatures HTML (Time Series) */
+        .thumb-iframe {
+            width: 150px; height: 100px; border: 1px solid #e2e8f0; border-radius: 6px;
+            overflow: hidden; position: relative; background: white;
+        }
+        .thumb-iframe iframe {
+            width: 750px; height: 500px; border: none;
+            transform: scale(0.2); transform-origin: 0 0;
+            pointer-events: none;
+        }
+        .iframe-overlay { position: absolute; top:0; left:0; width:100%; height:100%; cursor:pointer; }
+
+        /* Zoom Plein Écran */
+        .is-zoomed { 
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) !important;
+            width: auto !important; height: 90vh !important; z-index: 9999;
+            box-shadow: 0 0 100px rgba(0,0,0,0.8); cursor: zoom-out;
+            border: 5px solid white; border-radius: 4px;
+        }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9998; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h5>🛰️ PyCMT Dashboard</h5>
+    <div class="nav-menu">
+        <button class="nav-item active" onclick="switchTab(this, 'spatial')">Spatial Maps</button>
+        <button class="nav-item" onclick="switchTab(this, 'ts_points')">Rainfall Time Series </button>
+        <button class="nav-item" onclick="switchTab(this, 'spp')">Seasonal Raifall Performance Probability (SPP)</button>
+        <button class="nav-item" onclick="switchTab(this, 'indices')">SPI / Runoff / Soil Moisture</button>
+        <button class="nav-item" onclick="switchTab(this, 'vhi')">Vegetation Health Index (VHI)</button>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="scroll-area">
+        <div id="content-viewer" class="matrix-container"></div>
+    </div>
+</div>
+
+<div class="overlay" onclick="closeZoom()"></div>
+
+<script>
+const COUNTRY = "{{ country }}";
+const RAINDATA = "{{ data }}"
+const VHI_WEEKS = {{ vhi_weeks | tojson }};
+const STATIONS = {{ stations | tojson }};
+let currentCategory = 'spatial';
+
+function switchTab(btn, cat) {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentCategory = cat;
+    loadContent();
+    document.querySelector('.scroll-area').scrollTop = 0;
+}
+
+function toggleZoom(img) {
+    if (img.classList.contains('is-zoomed')) {
+        closeZoom();
+    } else {
+        img.classList.add('is-zoomed');
+        document.querySelector('.overlay').style.display = 'block';
+    }
+}
+
+function closeZoom() {
+    const zoomed = document.querySelector('.zoomable.is-zoomed');
+    if (zoomed) zoomed.classList.remove('is-zoomed');
+    document.querySelector('.overlay').style.display = 'none';
+}
+
+function createThumb(path) {
+    return `
+    <div class="thumb-box">
+        <img src="${path}" class="zoomable" onclick="toggleZoom(this)" onerror="this.src='https://via.placeholder.com/150x100?text=Indisponible'">
+    </div>`;
+}
+
+function createIframeThumb(path) {
+    return `
+    <div class="thumb-box">
+        <div class="thumb-iframe" onclick="window.open('${path}', '_blank')">
+            <div class="iframe-overlay"></div>
+            <iframe src="${path}"></iframe>
+        </div>
+        <a href="${path}" target="_blank" style="font-size:0.62rem; text-decoration:none; color:#3498db; display:block; margin-top:2px;">Agrandir ↗</a>
+    </div>`;
+}
+
+function createTableHeader(labelsArray) {
+    let headerHtml = `<div class="matrix-header"><div class="header-blank"></div>`;
+    labelsArray.forEach(label => {
+        headerHtml += `<div class="column-title">${label}</div>`;
+    });
+    headerHtml += `</div>`;
+    return headerHtml;
+}
+
+function loadContent() {
+    const viewer = document.getElementById('content-viewer');
+    viewer.innerHTML = "";
+    let html = "";
+
+    if (currentCategory === 'spatial') {
+        const periods = ["7day", "10day", "30day", "60day", "90day", "180day"];
+        html += createTableHeader(["7 days", "10 days", "30 days", "60 days", "90 days", "180 days"]);
+        
+        const vars = [
+            {id: "total_precip", n: "Total Precip"},
+            {id: "precip_anomaly", n: "Anomaly"},
+            {id: "percent_normal_precip", n: "% of Normal"},
+            {id: "normal_precip", n: "Climatology"}
+        ];
+        vars.forEach(v => {
+            html += `<div class="matrix-row"><div class="row-label">${v.n}</div>`;
+            periods.forEach(p => {
+                const path = `spatial_maps/${COUNTRY}/${RAINDATA}/${COUNTRY}_${p}_${RAINDATA}_${v.id}.png`;
+                html += createThumb(path);
+            });
+            html += `</div>`;
+        });
+    }
+
+    else if (currentCategory === 'indices') {
+        const months = [1, 3, 6, 12, 24];
+        html += createTableHeader(["1 months", "3 months", "6 months", "12 months", "24 months"]);
+
+        const products = [
+            {id: "spi_cmorph", n: "SPI (CMORPH)", folder: "spi_maps", sub: "cmorph", suffix: "spi_cmorph"},
+            {id: "spi_rfe2", n: "SPI (RFE2)", folder: "spi_maps", sub: "rfe2", suffix: "spi_rfe2"},
+            {id: "r", n: "Runoff", folder: "Runoff_maps", sub: "", suffix: "r"},
+            {id: "sm", n: "Soil Moisture", folder: "Soilmoisture_maps", sub: "", suffix: "sm"}
+        ];
+        products.forEach(pr => {
+            html += `<div class="matrix-row"><div class="row-label">${pr.n}</div>`;
+            months.forEach(m => {
+                const path = pr.sub 
+                    ? `spi/${pr.folder}/${COUNTRY}/${pr.sub}/${COUNTRY}_${pr.suffix}_${m}mo.png`
+                    : `spi/${pr.folder}/${COUNTRY}/${COUNTRY}_${pr.suffix}_${m}mo.png`;
+                html += createThumb(path);
+            });
+            html += `</div>`;
+        });
+    }
+
+    else if (currentCategory === 'spp') {
+        const configs = ["Month1Proj0", "Month1Proj1", "Month1Proj2", "Month2Proj0", "Month2Proj1", "Month3Proj0"];
+        html += createTableHeader(["M1 P0", "M1 P1", "M1 P2", "M2 P0", "M2 P1", "M3 P0"]);
+
+        ["cmorph", "rfe2"].forEach(ds => {
+            html += `<div class="matrix-row"><div class="row-label">SPP ${ds.toUpperCase()}</div>`;
+            configs.forEach(cfg => {
+                const path = `spp/spp_maps/${COUNTRY}/${ds}/spp_${COUNTRY}_${ds}_${cfg}.png`;
+                html += createThumb(path);
+            });
+            html += `</div>`;
+        });
+    }
+
+    else if (currentCategory === 'vhi') {
+        const weeks = VHI_WEEKS.slice(-6);
+        const weekLabels = weeks.map(w => `week ${w}`);
+        html += createTableHeader(weekLabels);
+
+        html += `<div class="matrix-row"><div class="row-label">Vegetation Health index (VHI)</div>`;
+        weeks.forEach(w => {
+            const path = `vhi/vhi_maps/${COUNTRY}/${COUNTRY}_vhi${w}.png`;
+            html += createThumb(path);
+        });
+        html += `</div>`;
+    }
+
+    else if (currentCategory === 'ts_points') {
+        const periods = [7, 10, 30, 60, 90, 180];
+        html += createTableHeader(["7 days", "10 days", "30 days", "60 days", "90 days", "180 days"]);
+
+        html += `<div class="matrix-row"><div class="row-label">Rainfall time series at gridpoint station location</div>`;
+        periods.forEach(p => {
+            const path = `ts_maps/${COUNTRY}/${RAINDATA}/pix_${p}day_body.html`;
+            html += createIframeThumb(path);
+        });
+        html += `</div>`;
+    }
+
+    viewer.innerHTML = html;
+}
+
+window.onload = loadContent;
+</script>
+</body>
+</html>

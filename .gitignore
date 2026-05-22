@@ -1,0 +1,25 @@
+# Environnement virtuel
+venv/
+.venv/
+Env/
+
+# Fichiers de données lourds (Ressources géospatiales, images générées, binaires)
+vhi_maps/
+htmlcov/
+fake_dir/
+examples/
+
+# Caches Python et tests
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+
+# Configuration d'IDE
+.vscode/
+.idea/
+
+# Distribution et Builds (PyPI)
+build/
+dist/
+*.egg-info/
