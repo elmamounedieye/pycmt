@@ -17,7 +17,8 @@ import gzip
 
 #Country information
 def get_country_iso(country: str,):
-    #os.chdir('.\generate_mask')
+    crr = os.getcwd()
+    print(f"crr : {crr}")
     BASE_DIR = Path(__file__).resolve().parents[3]
     #dataDir = BASE_DIR / "data"
     data_file = BASE_DIR / "data" / "countries_iso_dict.json"

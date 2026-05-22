@@ -34,6 +34,7 @@ def plot_precip_ts(country: str, rndta: str, rsl, ts_rsl):
         shutil.copytree(source, destination)
     else:
         country_iso = get_country_iso(country)
+        print(f" country iso : {country_iso}")
         download_gadm_country(country_iso)
         print("✅ Téléchargement du shapefile terminé !")
     
