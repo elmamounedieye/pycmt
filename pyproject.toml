@@ -36,3 +36,6 @@ dependencies = [
     "xarray",
     "xgrads"
 ]
+
+[tool.setuptools.package-data]
+"pycmt" = ["data/**/*"]
