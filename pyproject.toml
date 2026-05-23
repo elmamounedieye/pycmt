@@ -42,5 +42,4 @@ packages = ["pycmt"]
 package-dir = {"" = "src"}
 
 [tool.setuptools.package-data]
-# Cette ligne force l'inclusion de TOUT le contenu du dossier data, sous n'importe quel format
 "pycmt" = ["data/**/*", "data/*"]
