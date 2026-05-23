@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -38,8 +38,10 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["pycmt"]
-package-dir = {"" = "src"}
+# AUTOMATION : Force la recherche récursive de TOUS tes sous-dossiers (core, modules, visualization)
+packages = { find = { where = ["src"] } }
+include-package-data = true
 
 [tool.setuptools.package-data]
+# Sécurité pour inclure le dossier data interne
 "pycmt" = ["data/**/*", "data/*"]

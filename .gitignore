@@ -2,7 +2,6 @@
 venv/
 .venv/
 Env/
-cmtvenv/
 
 # Fichiers de données lourds (Ressources géospatiales, images générées, binaires)
 vhi_maps/
