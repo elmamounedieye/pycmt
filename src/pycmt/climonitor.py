@@ -106,17 +106,17 @@ def generate_dashboard(country, rndta):
 # =========================================================================
 # BLOC D'EXÉCUTION PRINCIPAL (PRODUCTION)
 # =========================================================================
-"""
+
 if __name__ == "__main__":
     country_target = "Senegal"
     data_source = "arc2"  # ou "rfe2"
     
     print(f"🏁 Démarrage du Climonitor pour : {country_target}")
-    starting = time.time()
+    #starting = time.time()
     
     # 1. Pipeline Précipitations et Séries Temporelles
     iso = plot_precip_ts(country_target, data_source, 0.25, 0.5)
-    
+    """
     # 2. Décommentez les blocs suivants selon vos besoins de production :
     # generate_spp(country_target, iso)
     # generate_spi_(country_target, iso)
