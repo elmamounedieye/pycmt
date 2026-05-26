@@ -112,12 +112,12 @@ def generate_tseries(country_iso, country, rndta):
     save_path = os.path.abspath(output_dir)
     
     if rndta.lower() == "arc2":
-        daily_precip_path = (base_dir / "ARC2" / "arc2" / "arc2.ctl").resolve()
-        clim_path = (base_dir / "ARC2" / "arc2_clim" / "arc2_clim.ctl").resolve()
+        daily_precip_path = base_dir / "ARC2" / "arc2" / "arc2.ctl"
+        clim_path = base_dir / "ARC2" / "arc2_clim" / "arc2_clim.ctl"
         precip_var = "pmer2"
     elif rndta.lower() == "rfe2": 
-        daily_precip_path = (base_dir / "rfe2_data" / "rfe2_daily" / "rfe2daily.ctl").resolve()
-        clim_path = (base_dir / "rfe2_data" / "rfe2_clim" / "rfe2clim.ctl").resolve()
+        daily_precip_path = base_dir / "rfe2_data" / "rfe2_daily" / "rfe2daily.ctl"
+        clim_path = base_dir / "rfe2_data" / "rfe2_clim" / "rfe2clim.ctl"
         precip_var = "r"
 
     #daily_data = open_CtlDataset(os.path.relpath(daily_precip_path))
