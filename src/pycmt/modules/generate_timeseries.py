@@ -128,8 +128,8 @@ def generate_tseries(country_iso, country, rndta):
     print(f"==================================")
     print(f"daily precip path with Path 22: {str(daily_precip_path)}")
     print(f"==================================")
-    daily_data = open_CtlDataset(daily_precip_path)
-    clim_data = open_CtlDataset(Path(clim_path))
+    daily_data = open_CtlDataset(str(daily_precip_path))
+    clim_data = open_CtlDataset(str(clim_path))
 
     #######added######
 
