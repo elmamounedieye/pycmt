@@ -96,10 +96,10 @@ def generate_html_map(country_name, rndta):
 
         # 5. Détermination du chemin de sortie et sauvegarde
         if periods == "rev":
-            output_dir = Path("..") / ".." / "data" / "ts_maps" / f"{country_name}"/ rndta
+            output_dir = Path(__file__).resolve().parents[1] / "data" / "ts_maps" / f"{country_name}"/ rndta
             filename = f"pix_{periods}_body.html"
         else:
-            output_dir = Path("..") / ".." / "data" / "ts_maps" / f"{country_name}" / rndta
+            output_dir = Path(__file__).resolve().parents[1] / "data" / "ts_maps" / f"{country_name}" / rndta
             filename = f"pix_{periods}day_body.html"
 
         os.makedirs(output_dir, exist_ok=True)
