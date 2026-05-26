@@ -10,6 +10,9 @@ authors = [
     {name = "Mouhamed El Mamoune Dieye"}
 ]
 
+[project.scripts]
+pycmt = "pycmt.climonitor:main"
+
 dependencies = [
     "affine",
     "Cartopy",
