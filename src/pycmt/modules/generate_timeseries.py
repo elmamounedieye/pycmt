@@ -120,8 +120,10 @@ def generate_tseries(country_iso, country, rndta):
         clim_path = (base_dir / "rfe2_data" / "rfe2_clim" / "rfe2clim.ctl").resolve()
         precip_var = "r"
 
-    daily_data = open_CtlDataset(os.path.relpath(daily_precip_path))
-    clim_data = open_CtlDataset(os.path.relpath(clim_path))
+    #daily_data = open_CtlDataset(os.path.relpath(daily_precip_path))
+    #clim_data = open_CtlDataset(os.path.relpath(clim_path))
+    daily_data = open_CtlDataset(str(Path(daily_precip_path).resolve()))
+    clim_data = open_CtlDataset(str(Path(clim_path).resolve()))
 
     #######added######
 
