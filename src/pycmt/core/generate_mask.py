@@ -91,7 +91,7 @@ def run_workflow(iso_code, country):
             "1p0": (1.0, None, None)
         }
     
-    shp_path = Path.cwd().resolve().parents[3] / "data" / "gis_resources" / "countries" /f"{iso_code}_adm"
+    shp_path = Path(__file__).resolve().parents[1] / "data" / "gis_resources" / "countries" /f"{iso_code}_adm"
     generator = Maskgenerator(shp_path)
     
     for rsl_name, (rsl_val, org_lon, org_lat) in config.items():
@@ -101,7 +101,7 @@ def run_workflow(iso_code, country):
         lat_bounds = bounds[1], bounds[3]
 
 
-        out_dir =Path.cwd().resolve().parents[3]/ "data"/ "gis_resources"/f"country_masks{rsl_name}/365dcal"
+        out_dir =Path(__file__).resolve().parents[1]/ "data"/ "gis_resources"/f"country_masks{rsl_name}/365dcal"
         os.makedirs(out_dir, exist_ok=True)
 
         output_path = generator.create_and_save_mask(rsl_val, bounds, f"{out_dir}/{iso_code}_mask.nc")
@@ -109,7 +109,7 @@ def run_workflow(iso_code, country):
     country_latlon = [country, round(bounds[1],0), round(bounds[3],0), round(bounds[0],0), round(bounds[2],0), rsl_val, rsl_val]  
     cur = os.getcwd()
     print(f"cur : {cur}")
-    country_info = Path.cwd().resolve().parents[3] / "data" / f"{country}_latlon"
+    country_info = Path(__file__).resolve().parents[1] / "data" / f"{country}_latlon"
     with open(country_info, "w", encoding="utf-8") as f:
         country_latlon = " ".join(map(str, country_latlon))
         f.write(country_latlon) 

@@ -28,7 +28,7 @@ from pycmt.visualization.generate_html import build_country_dashboard, generate_
 def plot_precip_ts(country: str, rndta: str, rsl, ts_rsl):
     if country == "Africa":
         country_iso = "AFR"
-        source = Path.cwd().resolve().parent[2] / "data" / "AFR_adm"
+        source = Path.cwd().resolve().parent[1] / "data" / "AFR_adm"
         destination = Path.re / "data" / "gis_resources" / "countries"
         destination.mkdir(parents=True, exist_ok=True)
         shutil.copytree(source, destination)

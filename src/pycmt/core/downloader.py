@@ -85,7 +85,7 @@ def download_gadm_country(iso_code, file_format="shp"):
 def rename_country_shapefiles(country_iso):
 
     #folder = Path(shpfolder)
-    folder = Path(__file__).resolve().parents[3] / "data" / "gis_resources" / "countries" / f"{country_iso}_adm"
+    folder = Path(__file__).resolve().parents[1] / "data" / "gis_resources" / "countries" / f"{country_iso}_adm"
     expected_final_file = folder / f"{country_iso}_adm0.shp"
     if os.path.exists(expected_final_file):
         print(f"##################################################")
@@ -114,9 +114,9 @@ def rename_country_shapefiles(country_iso):
 
 def download_arc2_data(init_day_offset=0):
     # 1. Configuration des chemins
-    base_dir = Path.cwd().resolve().parents[3]
-    daily_dir = Path.cwd().resolve().parents[3] / "data" / "ARC2" /"arc2"
-    clim_dir = Path.cwd().resolve().parents[3]/ "data" / "ARC2" / "arc2_clim"
+    base_dir = Path(__file__).resolve().parents[1]
+    daily_dir = Path(__file__).resolve().parents[1] / "data" / "ARC2" /"arc2"
+    clim_dir = Path(__file__).resolve().parents[1]/ "data" / "ARC2" / "arc2_clim"
     
     # Création des dossiers s'ils n'existent pas
     daily_dir.mkdir(parents=True, exist_ok=True)
@@ -224,7 +224,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 def download_rfe2(days_offset=0):
-    base_dir = Path.cwd().resolve().parents[3] / "data"
+    base_dir = Path(__file__).resolve().parents[1] / "data"
     output_dir = base_dir / "rfe2_data" / "rfe2_daily"
     clim_dir = base_dir / "rfe2_data" / "rfe2_clim"
     
@@ -374,7 +374,7 @@ def download_file(url, filename):
 def run_retrieval_vhi():
     # Nettoyage des PNG (comme dans le script shell)
     INIT_DAY = 0  # Équivalent à $1
-    TARGET_DIR = Path.cwd().resolve().parents[3] / "data" / "vhi" / "data"
+    TARGET_DIR = Path(__file__).resolve().parents[1] / "data" / "vhi" / "data"
     TARGET_DIR.mkdir(parents=True, exist_ok=True)
     WEEKS_TO_FETCH = 6
     for f in os.listdir(TARGET_DIR):
@@ -528,7 +528,7 @@ def run_spp_retrieval(rndta):
         "https://ftp.cpc.ncep.noaa.gov/International/spp/{rndta}/spp_{rndta}_comb_3ic-0proj.dat",
         "https://ftp.cpc.ncep.noaa.gov/International/spp/{rndta}/spp_timescales.txt"
     ]
-    base_dir = Path.cwd().resolve().parents[3] / "data" / "spp" /f"spp_data_{rndta}"
+    base_dir = Path(__file__).resolve().parents[1] / "data" / "spp" /f"spp_data_{rndta}"
     base_dir.mkdir(parents=True, exist_ok=True)
 
     all_tasks = []
@@ -581,7 +581,7 @@ def download_spp_noaa(rndta):
     ]
 
     # 2. Configuration des dossiers
-    target_dir = Path.cwd().resolve().parents[3] / "data" / "spp" / f"spp_data_{rndta}"
+    target_dir = Path(__file__).resolve().parents[1] / "data" / "spp" / f"spp_data_{rndta}"
     target_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"🛰️  Mise à jour des données NOAA SPP pour : {rndta.upper()}")
@@ -722,7 +722,7 @@ def download_spi(rndta: str):
         "https://ftp.cpc.ncep.noaa.gov/fews/DroughtMonitor/spi/rfe2/rfe2.spi.6.mo.ctl"
         ]
     }
-    base_dir = Path.cwd().resolve().parents[3] / "data" / "spi" /"data" /f"{rndta}"
+    base_dir = Path(__file__).resolve().parents[1] / "data" / "spi" /"data" /f"{rndta}"
     #daily_dir = base_dir / "data" / "spi" /"data"
     #clim_dir = base_dir / "data" / "ARC2" / "arc2_clim"
     
@@ -782,7 +782,7 @@ def download_spi(rndta: str):
 def download_runoff_data():
     # 1. Configuration du dossier de destination
     # On place les données dans ../../data/Runoff
-    base_dir = Path.cwd().resolve().parents[3] / "data" / "spi" / "data" / "Runoff"
+    base_dir = Path(__file__).resolve().parents[1] / "data" / "spi" / "data" / "Runoff"
     base_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"🚀 Début du téléchargement vers : {base_dir.resolve()}")
@@ -840,7 +840,7 @@ def download_runoff_data():
 def download_xsm_data():
     # 1. Configuration du dossier de destination
     # On place les données dans ../../data/Soilmoisture
-    base_dir = Path.cwd().resolve().parents[3] / "data" / "spi" / "data" / "Soilmoisture"
+    base_dir = Path(__file__).resolve().parents[1] / "data" / "spi" / "data" / "Soilmoisture"
     base_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"🚀 Début du téléchargement vers : {base_dir.resolve()}")

@@ -55,7 +55,7 @@ def plot_precip(rsl, rsl_name, country_iso, country, rndta):
     # =========================================================
     # 1. PATHS
     # =========================================================
-    base_dir = Path.cwd().resolve().parents[3] / "data"
+    base_dir = Path(__file__).resolve().parents[1] / "data"
     mask_path = base_dir / "gis_resources" / f"country_masks{rsl_name}" / "365dcal" / f"{country_iso}_mask.nc"
     if rndta.lower() == "arc2":
         daily_precip_path = (base_dir / "ARC2" / "arc2" / "arc2.ctl").resolve()

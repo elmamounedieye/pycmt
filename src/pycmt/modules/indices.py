@@ -76,7 +76,7 @@ def prepare_data_for_week(wk_info, week_idx, vhi_path):
     #os.chdir("/arc2")
     # 1. Identification du fichier satellite source
     # Le script cherche NPP ou J01
-    FIX_DIR = Path.cwd().resolve().parents[3] / "data"
+    FIX_DIR = Path(__file__).resolve().parents[1] / "data"
     print(f" starting preparing data for week")
     prefix = "VHP.G04.C07"
     suffix = f"P{wk_info['file_tag']}.VH.nc"
@@ -229,7 +229,7 @@ def plot_vhi_map(da, extent_info, path_shp, wk_info, output_dir, country):
 
 def do_vhi(country, country_iso):
  
-    base_dir = Path.cwd().resolve().parents[3] / "data" 
+    base_dir = Path(__file__).resolve().parents[1] / "data" 
     vhi_dir_path = base_dir / "vhi" / "data" # On garde l'objet Path ici
     
     if not vhi_dir_path.exists():
@@ -359,7 +359,7 @@ def run_orchestrator_spp(country, country_iso, rndta, mask_enabled=True):
         f'spp_{rndta}_comb_1ic-2proj.ctl', f'spp_{rndta}_comb_2ic-0proj.ctl',
         f'spp_{rndta}_comb_2ic-1proj.ctl', f'spp_{rndta}_comb_3ic-0proj.ctl'
     ]
-    base_dir = Path.cwd().resolve().parents[3] / "data" 
+    base_dir = Path(__file__).resolve().parents[1] / "data" 
     spp_dir_path = base_dir / "spp" / f"spp_data_{rndta}" 
     
     if not spp_dir_path.exists():
@@ -578,7 +578,7 @@ import shapely.geometry as sgeom
 from shapely.validation import make_valid  # Blindage topologique
 
 def generate_spi(country_iso, country, rndta):
-    base_dir = Path.cwd().resolve().parents[3] / "data" 
+    base_dir = Path(__file__).resolve().parents[1] / "data" 
     mask_path = base_dir / "gis_resources" / f"country_masks0p036" / "365dcal" / f"{country_iso}_mask.nc"
     spi_dir = base_dir / "spi" / "data" / f"{rndta}"
     

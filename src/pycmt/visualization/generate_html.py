@@ -8,8 +8,8 @@ import webbrowser
 
 def generate_html_map(country_name, rndta):
     country_display = country_name.capitalize()
-    pix_coord_file = Path.cwd().resolve().parents[3] / "data" / f"pixelargs_{country_name}.txt"
-    formatted_areas = Path.cwd().resolve().parents[3] / "data" /f"formatted_areas_{country_name}.json"
+    pix_coord_file = Path(__file__).resolve().parents[1] / "data" / f"pixelargs_{country_name}.txt"
+    formatted_areas = Path(__file__).resolve().parents[1] / "data" /f"formatted_areas_{country_name}.json"
     # 2. Lecture du fichier de coordonnées
     if not os.path.exists(pix_coord_file):
         print(f"Erreur : Le fichier {pix_coord_file} est introuvable.")
@@ -116,7 +116,7 @@ def generate_html_map(country_name, rndta):
 def build_country_dashboard(country_name, rndta):
     # --- CONFIGURATION DES CHEMINS ---
     # Utilisation de Path pour la robustesse Windows/Linux
-    data_root = Path.cwd().resolve().parents[3] / "data"
+    data_root = Path(__file__).resolve().parents[1] / "data"
     template_name = data_root / "template_pycmt_index.html"
     output_name = data_root / f"{country_name}_index.html"
     

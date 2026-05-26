@@ -59,7 +59,7 @@ from pathlib import Path
 from shapely.validation import make_valid  # Blindage topologique
 
 def generate_runoff(country_iso, country):
-    base_dir = Path.cwd().resolve().parents[3] / "data" 
+    base_dir = Path(__file__).resolve().parents[1] / "data" 
     mask_path = base_dir / "gis_resources" / f"country_masks0p036" / "365dcal" / f"{country_iso}_mask.nc"
     runoff_dir = base_dir / "SPI" / "data" / "Runoff"
     
@@ -252,7 +252,7 @@ import matplotlib.path as mpath
 from shapely.validation import make_valid  # Blindage topologique anti-crash
 
 def generate_soilmoisture(country_iso, country):
-    base_dir = Path.cwd().resolve().parents[3] / "data" 
+    base_dir = Path(__file__).resolve().parents[1] / "data" 
     mask_path = base_dir / "gis_resources" / f"country_masks0p036" / "365dcal" / f"{country_iso}_mask.nc"
     soilmoisture_dir = os.path.relpath(base_dir / "SPI" / "data" / "soilmoisture")
     output_dir = base_dir / "SPI" / "Soilmoisture_maps" / f"{country}"

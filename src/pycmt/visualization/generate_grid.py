@@ -66,10 +66,10 @@ def generate_pixel_arguments(
     # =========================================================
     # 1. PATHS
     # =========================================================
-    latlon_path = Path.cwd().resolve().parents[3] / "data" / f"{country_name}_latlon"
-    stn_file_path = Path.cwd().resolve().parents[3] / "data" / f"{country_name}_stns.txt"
+    latlon_path = Path(__file__).resolve().parents[1] / "data" / f"{country_name}_latlon"
+    stn_file_path = Path(__file__).resolve().parents[1] / "data" / f"{country_name}_stns.txt"
 
-    output_file = Path.cwd().resolve().parents[3] / "data" / f"pixelargs_{country_name}.txt"
+    output_file = Path(__file__).resolve().parents[1] / "data" / f"pixelargs_{country_name}.txt"
 
     # =========================================================
     # 2. LECTURE DES LIMITES
@@ -192,7 +192,7 @@ def generate_pixel_arguments(
     df_final = pd.DataFrame(pixel_data)
     #file = Path(output_file)
     #file.unlink()
-    output_file = Path.cwd().resolve().parents[3] / "data" / f"pixelargs_{country_name}.txt"
+    output_file = Path(__file__).resolve().parents[1] / "data" / f"pixelargs_{country_name}.txt"
     df_final.to_csv(
         output_file,
         sep=' ',
@@ -224,7 +224,7 @@ def check_interior_point(lon, lat, area_geom):
 
 def plot_pix_coordinates(country, country_iso, rndta):
     # --- Chemins ---
-    base_data = Path.cwd().resolve().parents[3] / "data"
+    base_data = Path(__file__).resolve().parents[1] / "data"
     country_latlon = base_data / f"{country}_latlon"
     pixel_args_path = base_data / f"pixelargs_{country}.txt" #Path(pixel_args)
     country_stns_path = base_data / f"{country.lower()}_stns.txt"
@@ -357,7 +357,7 @@ def plot_pix_coordinates(country, country_iso, rndta):
         html_areas_list = []
         formatted_areas[str(prd)] = format_txt
         
-    ts_path = (Path.cwd().resolve().parents[3] / "data" / "ts_maps" / f"{country}" / rndta).resolve()
+    ts_path = (Path(__file__).resolve().parents[1] / "data" / "ts_maps" / f"{country}" / rndta).resolve()
     ts_path.mkdir(parents=True, exist_ok=True)
     
     filename = f"{country}_grid.png"
