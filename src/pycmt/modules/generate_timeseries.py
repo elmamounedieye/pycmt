@@ -92,7 +92,7 @@ def generate_rainfall_plot(pcur_ts, pclim_ts, stnnm, lt, ln, stncnt, period, cou
 
     plt.suptitle(f"{rndta.upper()} Point Time Series\n{len(dates)}-Day Rainfall @ {stnnm} ({lt}N, {ln}E)", fontsize=14, y=0.94)
     
-    save_dir = Path.cwd().resolve().parents[3] / "data" / "ts_maps" / f"{country}" / rndta
+    save_dir = Path(__file__).resolve().parents[1] / "data" / "ts_maps" / f"{country}" / rndta
     save_dir.mkdir(parents=True, exist_ok=True)
     filename = f"{stncnt}_{period}.png"
     
@@ -105,7 +105,7 @@ def generate_rainfall_plot(pcur_ts, pclim_ts, stnnm, lt, ln, stncnt, period, cou
 
 ####### Execution ########
 def generate_tseries(country_iso, country, rndta):
-    base_dir = Path.cwd().resolve().parents[3] / "data" 
+    base_dir = Path(__file__).resolve().parents[1] / "data" 
     output_dir = base_dir / "ts_maps"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)

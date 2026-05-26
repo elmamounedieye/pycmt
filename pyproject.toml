@@ -38,7 +38,7 @@ dependencies = [
 ]
 
 [project.scripts]
-pycmt = "pycmt.climonitor:main"
+pycmt = "pycmt:climonitor"
 
 [tool.setuptools]
 # AUTOMATION : Force la recherche récursive de TOUS tes sous-dossiers (core, modules, visualization)
