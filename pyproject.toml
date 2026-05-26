@@ -10,9 +10,6 @@ authors = [
     {name = "Mouhamed El Mamoune Dieye"}
 ]
 
-[project.scripts]
-pycmt = "pycmt.climonitor:main"
-
 dependencies = [
     "affine",
     "Cartopy",
@@ -39,6 +36,9 @@ dependencies = [
     "xarray",
     "xgrads"
 ]
+
+[project.scripts]
+pycmt = "pycmt.climonitor:main"
 
 [tool.setuptools]
 # AUTOMATION : Force la recherche récursive de TOUS tes sous-dossiers (core, modules, visualization)
