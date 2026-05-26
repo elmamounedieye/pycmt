@@ -130,8 +130,11 @@ def generate_tseries(country_iso, country, rndta):
     print(f"==================================")
     """daily_data = open_CtlDataset(Path(daily_precip_path).resolve().as_posix())
     clim_data = open_CtlDataset(Path(clim_path).resolve().as_posix())"""
-    daily_data = open_CtlDataset(str(daily_precip_path)[2:])
-    clim_data = open_CtlDataset(str(clim_path)[2:])
+    #daily_data = open_CtlDataset(str(daily_precip_path)[2:])
+    daily_data = open_CtlDataset(os.path.abspath(daily_precip_path).replace('./', ''))
+    #clim_data = open_CtlDataset(str(clim_path)[2:])
+    clim_data = open_CtlDataset(os.path.abspath(clim_path).replace('./', ''))
+    #os.path.abspath(clim_path).replace('\\', '/')
 
     #######added######
 
