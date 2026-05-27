@@ -1,3 +1,3 @@
 # pycmt
 
-Download this  "Test Notebook" to use the PyCMT "https://github.com/elmamounedieye/pycmt/blob/d3eb66cafd21ab863e943b1515808a3816d99cee/Test%20Notebook.ipynb"
+Download this  "Test Notebook" to use the PyCMT https://github.com/elmamounedieye/pycmt/blob/177abdea966538b5f1f4c626c32a888be439acc4/Test%20Notebook%200.ipynb.
