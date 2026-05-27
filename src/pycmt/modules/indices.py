@@ -31,10 +31,8 @@ MASK_OPT = "mask_yes"     # Correspond à $4
 #FIX_DIR = "../fix"
 
 def get_week_logic(days_ago):
-    """
-    Reproduit la logique de calendrier du script original.
-    Calcul des semaines de 7 jours à partir du 1er Janvier.
-    """
+    
+    
     print(f" starting getting week info")
     target_date = datetime.now() - timedelta(days=days_ago)
     year = target_date.year
@@ -161,8 +159,6 @@ def prepare_vhi_data(path_vhi, path_mask):
 
     
     print(f" Starting Preparing VHI data")
-    """print(f"VHI CWD: {dir}")
-    print(f"{path_vhi}")"""
     ds = xr.open_dataset(path_vhi) #r'vhi.nc')
     ds = ds.assign_coords({
                 "lat": ds.latitude,
@@ -174,9 +170,7 @@ def prepare_vhi_data(path_vhi, path_mask):
     vhi = ds["VHI"].load()
     
     mask_ds = xr.open_dataset(path_mask)
-    #land_mask = xr.open_dataset("GLDASp5_landmask_025d.nc4")
     mask_interp = mask_ds['mask_data'].interp(lat=vhi.lat, lon=vhi.lon, method="nearest")
-    #land_interp = land_mask["GLDAS_mask"].isel(time=-1).interp(lat=vhi.lat, lon=vhi.lon, method="nearest").load()
     print(f" Ending Preparing VHI data")
     return vhi.where(mask_interp == 1) #&(land_interp ==1))
 
@@ -223,7 +217,7 @@ def plot_vhi_map(da, extent_info, path_shp, wk_info, output_dir, country):
 
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
     plt.close(fig)
-    print(f"Fichier créé : {output_path}")
+    #print(f"Fichier créé : {output_path}")
     print(f"Ending Generating VHI maps")
 
 
@@ -247,7 +241,7 @@ def do_vhi(country, country_iso):
     FILE_VHI = base_dir / "vhi" / "data" / "vhi.nc"
     FILE_SHP = base_dir / "gis_resources"/"countries" / f"{country_iso}_adm" /f"{country_iso}_adm1.shp"
     
-    print(f"Traitement VHI pour {country}...")
+    print(f"Processing VHI for {country}...")
 
     for i in range(1, 7):
         # Calcul du décalage de jours (7, 14, 21...)
@@ -255,21 +249,16 @@ def do_vhi(country, country_iso):
         
         # Extraction des infos de calendrier
         wk_info = get_week_logic(nd)
-        print(f"week info: {wk_info}")
+        #print(f"week info: {wk_info}")
         # Traitement
         prepare_data_for_week(wk_info, i, vhi_dir_str)
         try:
             conf = load_config_extent(country_info)
-            #os.chdir("..")          
-            curr =os.getcwd()
-            print(f"currently dur : {curr}")
             vhi_final = prepare_vhi_data(FILE_VHI, country_mask)
             plot_vhi_map(vhi_final, conf, FILE_SHP, wk_info, output_dir, country)
         except Exception as e:
-            print(f"Erreur lors de l'exécution : {e}")
-        #if os.path.exists(FILE_VHI):
-        #    os.remove(FILE_VHI)
-        #break
+            print(f"Error during execution : {e}")
+
             
 
     print("\nFin du script.")
@@ -292,13 +281,11 @@ from matplotlib.colors import ListedColormap, BoundaryNorm
 def read_country_config(filepath):
     with open(filepath, 'r') as f:
         data = f.readline().split()
-        # On saute l'en-tête GrADS si présent, on prend la ligne de données
-        #data = lines[1].split() 
+
         return {
             'name': data[0],
             'lat1': float(data[1]), 'lat2': float(data[2]),
             'lon1': float(data[3]), 'lon2': float(data[4])
-            #'xlint': float(data[5]), 'ylint': float(data[6])
         }
 
 def read_captions(filepath):
@@ -379,7 +366,7 @@ def run_orchestrator_spp(country, country_iso, rndta, mask_enabled=True):
     captions = read_captions(captions_info)
     cmaps, norms = get_grads_colors()
 
-    print("🗺️ Chargement et traitement des limites géographiques...")
+    print("Loading geographic boundaries...")
     shp_error = False
     try:
         shp_path = base_dir / "gis_resources" / "countries" / f"{country_iso}_adm" / f"{country_iso}_adm1.shp"
@@ -400,20 +387,18 @@ def run_orchestrator_spp(country, country_iso, rndta, mask_enabled=True):
         pad = 0.5
         extent_box = [bounds[0]-pad, bounds[2]+pad, bounds[1]-pad, bounds[3]+pad]
     except Exception as e:
-        print(f"⚠️ Erreur d'initialisation SHP : {e}")
+        print(f"⚠️ Error initializing SHP : {e}")
         shp_error = True
         extent_box = [config['lon1'], config['lon2'], config['lat1'], config['lat2']]
 
     mask_ds = None
     if mask_enabled:
-        #mask_path = base_dir / "gis_resources" / f"country_masks{rsl_name}" / "365dcal" / f"{country_iso}_mask.nc"
         mask_path = base_dir / "gis_resources" / f"country_masks0p1" / "365dcal" / f"{country_iso}_mask.nc"
 
         mask_ds = xr.open_dataset(mask_path)
         mask_sorted = mask_ds['mask_data']
 
     for i, ctl in enumerate(ctl_files):
-        print(f"Processing {ctl}...")
         ds = open_CtlDataset(os.path.relpath(spp_dir_path / ctl))
         
         def lon_360_to_180(ds):
@@ -516,10 +501,8 @@ def run_orchestrator_spp(country, country_iso, rndta, mask_enabled=True):
         plt.clf()
         plt.close(fig)
 
-    print(f"✅ Toutes les cartes SPP {rndta} ont été générées et masquées avec succès.")       #print(f"Saved: {output_name}")
-"""
-if __name__ == "__main__":
-    run_orchestrator_spp()"""
+    print(f"✅ SPP maps for {rndta} are generated.")       #print(f"Saved: {output_name}")
+
 ######END SPP #######
 
 ###### SPI ##########
@@ -596,7 +579,6 @@ def generate_spi(country_iso, country, rndta):
     # =========================================================================
     # 1. CHARGEMENT ET RÉPARATION STRICTE DU SHAPEFILE (Hors boucle)
     # =========================================================================
-    print("🗺️ Chargement et nettoyage des frontières géographiques...")
     shp_path = base_dir / "gis_resources" / "countries" / f"{country_iso}_adm" / f"{country_iso}_adm1.shp"
     shp_adm1 = gpd.read_file(shp_path)
     
@@ -629,9 +611,7 @@ def generate_spi(country_iso, country, rndta):
     # --- 3. BOUCLE SUR LES PÉRIODES ---
     periods = [1, 3, 6, 12, 24]
 
-    for p in periods:
-        print(f"🔄 Traitement : SPI {p}-Month...")
-        
+    for p in periods:        
         ds_spi = open_CtlDataset(os.path.join(spi_dir, f'{rndta}.spi.{p}.mo.ctl'))
         ds_m = open_CtlDataset(os.path.join(spi_dir, f'drymask{p}.ctl'))
 
@@ -724,7 +704,6 @@ def generate_spi(country_iso, country, rndta):
         plt.savefig(output_dir / f"{country}_spi_{rndta}_{p}mo.png", dpi=150, bbox_inches='tight')
         plt.clf()
         plt.close(fig)
-        print(f"💾 Carte validée et sauvegardée pour {p} mois.")
 
-    print(f"✅ Tous les calculs SPI terminés avec succès pour {country}.")
+    print(f"✅ SPI maps generated for {country}.")
 ######### End SPI ########

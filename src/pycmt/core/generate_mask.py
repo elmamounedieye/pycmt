@@ -11,10 +11,10 @@ from pathlib import Path
 
 class Maskgenerator:
     def __init__(self, shapefile_path):
-        print(f"#####################Mask generator#############################")
-        print(os.getcwd())
-        print(f"shapefile path : {shapefile_path}")
-        print(f"##################################################")
+        #print(f"#####################Mask generator#############################")
+        #print(os.getcwd())
+        #print(f"shapefile path : {shapefile_path}")
+        #print(f"##################################################")
         self.gdf = gpd.read_file(shapefile_path)
         self.shapes = [geom for geom in self.gdf.geometry]
         self.raw_bounds = self.gdf.total_bounds
@@ -76,8 +76,8 @@ class Maskgenerator:
         #Adding coordinates system (CRS)
         ds.rio.write_crs("epsg:4326", inplace = True)
         ds.to_netcdf(output_path)
-        print(f"=================output_path===============")
-        print(f"{output_path}")
+        #print(f"=================output_path===============")
+        #print(f"{output_path}")
         return output_path
     
 
@@ -95,7 +95,7 @@ def run_workflow(iso_code, country):
     generator = Maskgenerator(shp_path)
     
     for rsl_name, (rsl_val, org_lon, org_lat) in config.items():
-        print(f"Processing {rsl_name}...")
+        #print(f"Processing {rsl_name}...")
         bounds = generator.align_grid(rsl_val, org_lon, org_lat)
         lon_bounds = bounds[0], bounds[2]
         lat_bounds = bounds[1], bounds[3]
@@ -107,8 +107,8 @@ def run_workflow(iso_code, country):
         output_path = generator.create_and_save_mask(rsl_val, bounds, f"{out_dir}/{iso_code}_mask.nc")
 
     country_latlon = [country, round(bounds[1],0), round(bounds[3],0), round(bounds[0],0), round(bounds[2],0), rsl_val, rsl_val]  
-    cur = os.getcwd()
-    print(f"cur : {cur}")
+    #cur = os.getcwd()
+    #print(f"cur : {cur}")
     country_info = Path(__file__).resolve().parents[1] / "data" / f"{country}_latlon"
     with open(country_info, "w", encoding="utf-8") as f:
         country_latlon = " ".join(map(str, country_latlon))

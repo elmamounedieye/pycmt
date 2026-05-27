@@ -24,6 +24,41 @@ from pycmt.modules.precipitation import plot_precip
 from pycmt.visualization.generate_grid import generate_pixel_arguments, plot_pix_coordinates
 from pycmt.visualization.generate_html import build_country_dashboard, generate_html_map
 
+from pathlib import Path
+from IPython.display import display
+import ipywidgets as widgets
+import pycmt
+
+def upload_file(allowed_extensions=".ctl, .nc, .txt, .idx", subfolder="data"):
+    dest_dir = Path(pycmt.__file__).resolve() / subfolder
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    uploader = widgets.FileUpload(accept=allowed_extensions, multiple=False)
+    btn = widgets.Button(description="Save in source directory", button_style="success", icon="check")
+    out = widgets.Output()
+
+    def upload_data(b):
+        with out:
+            out.clear_output()
+            if not uploader.value:
+                return print("⚠️ Please, select a file first.")
+            
+            try:
+                # Extraction universelle (Gère v7 et v8+ d'ipywidgets en une ligne)
+                info = uploader.value[0] if isinstance(uploader.value, (list, tuple)) else list(uploader.value.values())[0]
+                name = info.get("name") or info.get("metadata", {}).get("name")
+                
+                dest_path = dest_dir / name
+                with open(dest_path, "wb") as f:
+                    f.write(bytes(info["content"]))
+                
+                print(f"SUCCESS: [{name}] saved.\nPath: {dest_path.resolve().as_posix()}")
+            except Exception as e:
+                print(f"❌ Error: {str(e)}")
+
+    btn.on_click(upload_data)
+    print("Select the file and click validate:")
+    display(uploader, btn, out)
 
 def plot_precip_ts(country: str, rndta: str, rsl, ts_rsl):
     if country == "Africa":
@@ -106,7 +141,7 @@ def generate_dashboard(country, rndta):
 # =========================================================================
 # BLOC D'EXÉCUTION PRINCIPAL (PRODUCTION)
 # =========================================================================
-
+"""
 if __name__ == "__main__":
     country_target = "Senegal"
     data_source = "arc2"  # ou "rfe2"
@@ -116,7 +151,7 @@ if __name__ == "__main__":
     
     # 1. Pipeline Précipitations et Séries Temporelles
     iso = plot_precip_ts(country_target, data_source, 0.25, 0.5)
-    """
+
     # 2. Décommentez les blocs suivants selon vos besoins de production :
     # generate_spp(country_target, iso)
     # generate_spi_(country_target, iso)

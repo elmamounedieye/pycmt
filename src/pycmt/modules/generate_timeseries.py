@@ -36,7 +36,7 @@ def get_nice_step(max_val, is_cumul=False):
     return imax, steps[-1]
 
 def generate_rainfall_plot(pcur_ts, pclim_ts, stnnm, lt, ln, stncnt, period, country, rndta):
-    """Génère et sauvegarde le graphique final avec des axes parfaitement alignés."""
+
     r1, r2 = process_data(pcur_ts)
     r3, r4 = process_data(pclim_ts)
     
@@ -46,7 +46,6 @@ def generate_rainfall_plot(pcur_ts, pclim_ts, stnnm, lt, ln, stncnt, period, cou
     imax1, del1 = get_nice_step(max(r1.max(), r3.max()))
     imax2, del2 = get_nice_step(max(r2.max(), r4.max()), is_cumul=True)
     
-    # FIX 1 : sharex=True force l'alignement géométrique strict des deux graphiques
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 11), sharex=True, gridspec_kw={'height_ratios': [2, 2]})
     plt.subplots_adjust(hspace=0.15) # Réduit un peu l'espace vide entre les deux
 
@@ -107,7 +106,6 @@ def generate_rainfall_plot(pcur_ts, pclim_ts, stnnm, lt, ln, stncnt, period, cou
 ####### Execution ########
 
 def generate_tseries(country_iso, country, rndta):
-    # 1. Gestion robuste et multiplateforme des répertoires de base
     base_dir = Path(__file__).resolve().parents[1] / "data"
     output_dir = base_dir / "ts_maps"
 
@@ -127,7 +125,7 @@ def generate_tseries(country_iso, country, rndta):
         precip_var = "r"
     else:
         raise ValueError(
-            f"Source de données inconnue : {rndta}. Choisissez 'arc2' ou 'rfe2'."
+            f"Data source unknown : {rndta}. Select 'arc2' or 'rfe2'."
         )
 
     # 3. Calcul des chemins absolus réels (Résout l'écart VS Code / Jupyter)
@@ -196,5 +194,5 @@ def generate_tseries(country_iso, country, rndta):
                 )
 
     duration = time.time() - start_time
-    print(f"--- Fin du traitement de la série temporelle ---")
-    print(f"Durée totale d'exécution : {duration:.2f} secondes")
+    print(f"--- End of time series processing ---")
+    print(f"Execution duration : {duration:.2f} seconds")

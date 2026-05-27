@@ -200,7 +200,7 @@ def generate_pixel_arguments(
         header=False
     )
 
-    print(f"✅ Fichier généré : {output_file} ({len(df_final)} lignes)")
+    #print(f"✅ Fichier généré : {output_file} ({len(df_final)} lignes)")
 
     #return output_file
 
@@ -302,7 +302,7 @@ def plot_pix_coordinates(country, country_iso, rndta):
         
         # 3. Écriture physique propre sur le disque
         updated_pix_df.to_csv(pixel_args_path, sep=' ', header=False, index=False)
-        print(f"💾 {pixel_args_path.name} synchronisé avec succès (Structure 10-colonnes respectée).")
+        #print(f"💾 {pixel_args_path.name} synchronisé avec succès (Structure 10-colonnes respectée).")
         # =====================================================================
 
         # Tracé des points filtrés
@@ -318,7 +318,7 @@ def plot_pix_coordinates(country, country_iso, rndta):
         ax.legend()
 
     except Exception as e:
-        print(f"Erreur lors du traitement géographique : {e}")
+        print(f"Error processing geographical coordinates : {e}")
         import traceback
         traceback.print_exc()
 
@@ -363,13 +363,11 @@ def plot_pix_coordinates(country, country_iso, rndta):
     filename = f"{country}_grid.png"
     full_save_path = ts_path / filename
     
-    print(f"🚀 Tentative de sauvegarde dans : {full_save_path}")
+    #print(f"🚀 Tentative de sauvegarde dans : {full_save_path}")
     plt.savefig(full_save_path, dpi=100) 
     plt.close(fig) 
     
-    print(f"✅ Image sauvegardée avec succès !")
+    #print(f"✅ Image sauvegardée avec succès !")
     with open(base_data / f"formatted_areas_{country}.json", "w", encoding="utf-8") as f:
         json.dump(formatted_areas, f, indent=4, ensure_ascii=False)
         f.close()
-
-    #return formatted_areas

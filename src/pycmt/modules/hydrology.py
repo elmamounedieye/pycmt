@@ -73,7 +73,7 @@ def generate_runoff(country_iso, country):
     # =========================================================================
     # 1. CHARGEMENT ET RÉPARATION DU SHAPEFILE (Hors boucle pour la vitesse)
     # =========================================================================
-    print("🗺️ Chargement et nettoyage des frontières géographiques...")
+    print("🗺️ loading geographic boundaries...")
     shap_path = base_dir / "gis_resources" / "countries" / f"{country_iso}_adm" / f"{country_iso}_adm1.shp"
     shp_adm1 = gpd.read_file(shap_path)
     
@@ -118,8 +118,9 @@ def generate_runoff(country_iso, country):
     # =========================================================================
     # 3. BOUCLE SUR LES PÉRIODES RUNOFF
     # =========================================================================
+    print(f"🎨  Processing runoff for {country}...")
     for p in periods:
-        print(f"🎨 Traitement Runoff {p}-Month pour {country}...")
+        
         
         ds_r = open_CtlDataset(os.path.join(runoff_dir, f'runoff.{p}.mo.ctl'))
         ds_m = open_CtlDataset(os.path.join(runoff_dir, f'drymask{p}.ctl'))
@@ -208,7 +209,7 @@ def generate_runoff(country_iso, country):
         plt.clf()
         plt.close(fig)
 
-    print(f"✅ Runoff Maps terminées avec double masque couleur pour {country}.")
+    print(f"✅ Runoff maps processed for {country}.")
 
 
 ############## SOIL MOISTURE #############
@@ -261,7 +262,6 @@ def generate_soilmoisture(country_iso, country):
     # =========================================================================
     # 1. CHARGEMENT ET RÉPARATION DU SHAPEFILE (Hors boucle pour la performance)
     # =========================================================================
-    print("🗺️ Chargement et traitement des limites géographiques...")
     shap_path = base_dir / "gis_resources" / "countries" / f"{country_iso}_adm" / f"{country_iso}_adm1.shp"
     shp_adm1 = gpd.read_file(shap_path)
     
@@ -299,8 +299,9 @@ def generate_soilmoisture(country_iso, country):
     # =========================================================================
     # 3. BOUCLE SUR LES PÉRIODES SOIL MOISTURE
     # =========================================================================
+    print(f"Processing : {country} Soil Moisture...")
     for p in periods:
-        print(f"🔄 Traitement : {country} Soil Moisture {p}-Month...")
+       
         
         ds_sm = open_CtlDataset(os.path.join(soilmoisture_dir, f'soilmoisture.{p}.mo.ctl'))
         ds_m = open_CtlDataset(os.path.join(soilmoisture_dir, f'drymask{p}.ctl'))
@@ -387,5 +388,5 @@ def generate_soilmoisture(country_iso, country):
         plt.clf()
         plt.close(fig)
 
-    print(f"✅ Toutes les cartes Soil Moisture pour {country} ont été générées avec double masque couleur.")
+    print(f"✅ Soil moisture maps generated for {country}.")
 

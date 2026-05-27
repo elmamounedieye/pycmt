@@ -17,13 +17,13 @@ import gzip
 
 #Country information
 def get_country_iso(country: str,):
-    crr = os.getcwd()
-    print(f"crr : {crr}")
+    #crr = os.getcwd()
+    #print(f"crr : {crr}")
     BASE_DIR = Path(__file__).resolve().parents[1]
     #dataDir = BASE_DIR / "data"
     data_file = BASE_DIR / "data" / "countries_iso_dict.json"
-    currrr = os.getcwd()
-    print(f"currrr :{currrr}")
+    #currrr = os.getcwd()
+    #print(f"currrr :{currrr}")
 
     try:
         with open(data_file, 'r', encoding='utf-8') as f:
@@ -33,9 +33,9 @@ def get_country_iso(country: str,):
         return country_iso
     
     except FileNotFoundError:
-        return f"❌ Error : Le fichier {data_file} est introuvable."
+        return f"❌ Error : Data file {data_file} not found."
     except KeyError:
-        return f"❌ Error : Le pays '{country}' n'est pas dans le dictionnaire."
+        return f"❌ Error : '{country}' is not in the dictionary."
 
 #Downloading country shapefile
 def download_gadm_country(iso_code, file_format="shp"):
@@ -88,9 +88,9 @@ def rename_country_shapefiles(country_iso):
     folder = Path(__file__).resolve().parents[1] / "data" / "gis_resources" / "countries" / f"{country_iso}_adm"
     expected_final_file = folder / f"{country_iso}_adm0.shp"
     if os.path.exists(expected_final_file):
-        print(f"##################################################")
+        #print(f"##################################################")
         #print(f"Files are already renamed in {shpfolder}")
-        print(f"##################################################")
+        #print(f"##################################################")
         return
     
     for path in folder.glob(f"gadm41_{country_iso}_*.shp"):
@@ -125,7 +125,7 @@ def download_arc2_data(init_day_offset=0):
     # 2. Paramètres de temps
     today = datetime.now() - timedelta(days=init_day_offset)
     
-    print(f"🚀 Démarrage du téléchargement ARC2 (180 jours)...")
+    print(f"🚀 Downloading ARC2 (180 days)...")
     print(f"today {today}")
     for i in range(1, 181):
         target_date = today - timedelta(days=i)
@@ -168,7 +168,7 @@ def manage_download(url, dest_path, is_gzip=False, min_size_kb=2000):
     if dest_path.exists() and (dest_path.stat().st_size / 1024) > min_size_kb:
         return # Fichier déjà présent et OK
 
-    print(f"⏳ Téléchargement : {dest_path.name}...")
+    print(f"⏳ Downloading : {dest_path.name}...")
     
     try:
         response = requests.get(url, stream=True, timeout=30)
@@ -237,7 +237,7 @@ def download_rfe2(days_offset=0):
     existing_files = list(output_dir.glob("all_products.bin.*"))
     
     if not existing_files:
-        print("⚠️ Aucun fichier trouvé. Premier téléchargement complet (180 jours).")
+        print("No file found. Download completed (180 days).")
         n_missing = 180
     else:
         dates_in_disk = []
@@ -255,11 +255,11 @@ def download_rfe2(days_offset=0):
             n_missing = 180
 
     if n_missing <= 0:
-        print("✅ Les données sont déjà parfaitement à jour. Aucun traitement requis.")
+        print("✅ Data up to data. No processing required.")
         return
         
-    print(f"🔄 Retard détecté : {n_missing} jours non téléchargés (D-{n_missing}).")
-    print(f"\n🚀 Récupération synchronisée (Précipitations + Climatologie) sur 180 jours...")
+    print(f"🔄 Delay : {n_missing} days not downloaded (D-{n_missing}).")
+    print(f"\n Synchronized retrieval (Prepitation + Climatology) over 180 days...")
 
     for i in range(1, 181):
         target_date = datetime.now() - timedelta(days=(days_offset + i))
@@ -272,7 +272,7 @@ def download_rfe2(days_offset=0):
         file_path = output_dir / file_name
 
         if not (file_path.exists() and file_path.stat().st_size == NORMAL_SIZE):
-            print(f"📡 Téléchargement précipitations : {date_str}...")
+            print(f" Downloading precipitation : {date_str}...")
             try:
                 response = requests.get(file_url, stream=True, timeout=30)
                 if response.status_code == 200:
@@ -286,25 +286,25 @@ def download_rfe2(days_offset=0):
                     
                     temp_gz.unlink()
                 else:
-                    print(f"⚠️ Indisponible sur le serveur : all_products.bin.{date_str}")
+                    print(f" Not available on the server : all_products.bin.{date_str}")
             except Exception as e:
-                print(f"❌ Erreur précipitations {date_str} : {e}")
+                print(f" Precipitation error {date_str} : {e}")
 
         clim_file_name = f"clim_dly.{mmdd}"
         clim_file_path = clim_dir / clim_file_name
         clim_url = f"https://ftp.cpc.ncep.noaa.gov/fews/clim_dly/clim_RFE2/{clim_file_name}"
 
         if not (clim_file_path.exists() and clim_file_path.stat().st_size == NORMAL_SIZE):
-            print(f"📡 Téléchargement climatologie jour-pour-jour : {mmdd}...")
+            print(f"Downloading climatology day-per-day : {mmdd}...")
             try:
                 response = requests.get(clim_url, timeout=20)
                 if response.status_code == 200:
                     with open(clim_file_path, "wb") as f:
                         f.write(response.content)
                 else:
-                    print(f"⚠️ Indisponible sur le serveur : clim_dly.{mmdd}")
+                    print(f" Not available on the server : clim_dly.{mmdd}")
             except Exception as e:
-                print(f"❌ Erreur climatologie {mmdd} : {e}")
+                print(f" Climatology error {mmdd} : {e}")
 
     post_files = list(output_dir.glob("all_products.bin.*"))
     valid_files_with_dates = []
@@ -320,13 +320,13 @@ def download_rfe2(days_offset=0):
         valid_files_with_dates.sort(key=lambda x: x[0])
         to_delete = valid_files_with_dates[:len(valid_files_with_dates) - 180]
         
-        print(f"\n🧹 Nettoyage de l'historique : Suppression des {len(to_delete)} jours les plus anciens...")
+        print(f"\nCleaning history :Deleting {len(to_delete)} previous days...")
         for f_date, f_path in to_delete:
             try:
                 f_path.unlink()
-                print(f"🗑️ Supprimé : {f_path.name} ({f_date})")
+                print(f"Deleted : {f_path.name} ({f_date})")
             except Exception as e:
-                print(f"⚠️ Impossible de supprimer {f_path.name} : {e}")
+                print(f"⚠️ Impossible to delete {f_path.name} : {e}")
 
     start_date = datetime.now() - timedelta(days=(days_offset + 180))
     start_date_str = start_date.strftime("%d%b%Y")
@@ -343,7 +343,7 @@ def download_rfe2(days_offset=0):
         replacements={"NNDAYS": 180, "STDATE": start_date_str}
     )
 
-    print(f"\n✅ Fenêtre de 180 jours mise à jour et synchronisée (Date de départ CTL : {start_date_str}).")
+    print(f"\n✅ 180 days range updated and synchronized (Beginning CTL : {start_date_str}).")
 
 
 
@@ -358,17 +358,17 @@ def download_rfe2(days_offset=0):
 
 def download_file(url, filename):
     try:
-        print(f"Tentative de téléchargement : {url}")
+        #print(f"Downloading attempt : {url}")
         # Note: Pour le FTP pur, urllib est préférable, mais requests gère très bien le HTTPS
         response = requests.get(url, stream=True, timeout=30)
         if response.status_code == 200:
             with open(filename, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
-            print(f"Succès : {filename} téléchargé.")
+            print(f"Succeeded : {filename} downloading.")
             return True
     except Exception as e:
-        print(f"Échec de l'URL : {e}")
+        print(f"URL failure : {e}")
         return False
 
 def run_retrieval_vhi():
@@ -394,13 +394,13 @@ def run_retrieval_vhi():
         wk_tag = f"{year}0{week_num:02d}"
         target_filename = f"VHP.G04.C07.j01.P{wk_tag}.VH.nc"
 
-        print(f"\n--- Semaine {i} (Tag: {wk_tag}) ---")
+        print(f"\n--- Week {i} (Tag: {wk_tag}) ---")
         #save_path = os.path.join(TARGET_DIR, target_filename)
         save_path = TARGET_DIR / target_filename
         print(f"{save_path}") 
         # Vérification de l'existence locale
         if os.path.exists(save_path):
-            print(f"Le fichier {target_filename} est déjà présent localement.")
+            print(f"File {target_filename} already downloaded.")
             continue
         
         URL_SOURCES = [
@@ -415,9 +415,6 @@ def run_retrieval_vhi():
             if download_file(source_url, save_path):
                 break # On s'arrête si un téléchargement réussit
 
-####### REVIEW RUN_RETRIEVAL MODULE
-#if __name__ == "__main__":
-#    run_retrieval_vhi()
 
 ####### Download SPP #######
 import os
@@ -462,12 +459,12 @@ def download_spp_file(url, target_folder):
             with open(save_path, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=16384):
                     f.write(chunk)
-            return f"SUCCÈS: {filename}"
+            return f"SUCCEEDED: {filename}"
         else:
-            return f"ERREUR {response.status_code}: {filename}"
+            return f"ERROR {response.status_code}: {filename}"
             
     except Exception as e:
-        return f"ÉCHEC: {filename} (Erreur: {e})"
+        return f"FAILURE: {filename} (Erreur: {e})"
     
 
 def generate_ctl_spp(template_name, output_path, replacements):
@@ -493,7 +490,7 @@ def generate_ctl_spp(template_name, output_path, replacements):
     #content = content.replace('^/', '^')   # Supprime le slash parasite
     
     output_path.write_text(content)
-    print(f"📝 CTL généré : {output_path.name}")
+    print(f"📝 CTL generated : {output_path.name}")
 
 
 def run_spp_retrieval(rndta):
@@ -537,18 +534,18 @@ def run_spp_retrieval(rndta):
     for url_template in base_urls:
         all_tasks.append((url_template.format(rndta=rndta), base_dir))
 
-    print(f"Démarrage avec contournement SSL pour : {', '.join(SOURCES_SELECTIONNEES)}")
+    #print(f"Démarrage avec contournement SSL pour : {', '.join(SOURCES_SELECTIONNEES)}")
 
     with ThreadPoolExecutor(max_workers=3) as executor:
         results = list(executor.map(lambda p: download_spp_file(*p), all_tasks))
 
-    for res in results:
-        print(res)
+    """for res in results:
+        print(res)"""
 
 
     # Boucler sur tous les fichiers finissant par .ctl
     for ctl_file in base_dir.glob("*.ctl"):
-        print(f"📄 Traitement du fichier : {ctl_file.name}")
+        #print(f"DOWNLOADING FILE : {ctl_file.name}")
         generate_ctl_spp(
         template_name=ctl_file,
         output_path=ctl_file,
@@ -584,8 +581,8 @@ def download_spp_noaa(rndta):
     target_dir = Path(__file__).resolve().parents[1] / "data" / "spp" / f"spp_data_{rndta}"
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"🛰️  Mise à jour des données NOAA SPP pour : {rndta.upper()}")
-    print(f"📂 Dossier : {target_dir.resolve()}\n")
+    #print(f"🛰️  Mise à jour des données NOAA SPP pour : {rndta.upper()}")
+    #print(f"📂 Dossier : {target_dir.resolve()}\n")
 
     # 3. Boucle de téléchargement
     for url_template in base_urls:
@@ -595,10 +592,10 @@ def download_spp_noaa(rndta):
 
         # --- LOGIQUE DE MISE À JOUR : Suppression si le fichier existe déjà ---
         if save_path.exists():
-            print(f"  [UPDATE] Suppression de l'ancienne version : {filename}")
+            #print(f"  [UPDATE] Suppression de l'ancienne version : {filename}")
             save_path.unlink() 
 
-        print(f"  [TÉLÉCHARGEMENT] {filename}...", end="", flush=True)
+        #print(f"  [TÉLÉCHARGEMENT] {filename}...", end="", flush=True)
 
         try:
             response = requests.get(url, stream=True, timeout=45)
@@ -607,18 +604,18 @@ def download_spp_noaa(rndta):
                 with open(save_path, 'wb') as f:
                     for chunk in response.iter_content(chunk_size=65536):
                         f.write(chunk)
-                print(" ✅ Terminé")
+                print(" ✅ Done")
             else:
-                print(f" ❌ Erreur {response.status_code} (Fichier peut-être absent sur le serveur)")
+                print(f" ❌ Error {response.status_code} ")
 
         except Exception as e:
-            print(f" 💥 Échec : {str(e)}")
+            print(f" 💥 Failure : {str(e)}")
 
     # 4. Traitement des fichiers CTL après téléchargement
     # (Note : correction de la faute de frappe "cmoprh" -> "cmorph")
     if rndta == "cmorph":
         for ctl_file in target_dir.glob("*.ctl"):
-            print(f"📄 Correction CTL (CMORPH) : {ctl_file.name}")
+            print(f"📄 Correcting CTL (CMORPH) : {ctl_file.name}")
             generate_ctl_spp(
                 template_name=ctl_file,
                 output_path=ctl_file,
@@ -626,7 +623,7 @@ def download_spp_noaa(rndta):
             )
     elif rndta == "rfe2":
         for ctl_file in target_dir.glob("*.ctl"):
-            print(f"📄 Correction CTL (RFE2) : {ctl_file.name}")
+            print(f"📄 Correcting CTL (RFE2) : {ctl_file.name}")
             generate_ctl_spp(
                 template_name=ctl_file,
                 output_path=ctl_file,
@@ -747,9 +744,9 @@ def download_spi(rndta: str):
             file_path = os.path.join(base_dir, filename)
             try:
                 os.remove(file_path)
-                print(f"   Supprimé : {filename}")
+                print(f"   Deleting : {filename}")
             except Exception as e:
-                print(f"   ❌ Erreur suppression {filename}: {e}")
+                print(f"   Error deletion {filename}: {e}")
 
     #### Download phase
     for url in spi_data_urls[rndta]:
@@ -757,7 +754,7 @@ def download_spi(rndta: str):
         # On définit le chemin complet (dossier + nom de fichier)
         save_path = os.path.join(base_dir, filename)
         
-        print(f"⏳ Téléchargement de {filename} vers {base_dir}...")
+        #print(f"⏳ Téléchargement de {filename} vers {base_dir}...")
         
         try:
             with requests.get(url, stream=True) as r:
@@ -768,10 +765,10 @@ def download_spi(rndta: str):
                         if chunk:
                             f.write(chunk)
                             
-            print(f"✅ Terminé : {filename}")
+            #print(f"✅ Terminé : {filename}")
             
         except requests.exceptions.RequestException as e:
-            print(f"❌ Erreur lors du téléchargement de {filename} : {e}")
+            print(f" Error downloading {filename} : {e}")
 
 #if __name__ == "__main__":
 #    download_files(urls_spi_cpcuni, "cpcuni")
@@ -816,7 +813,7 @@ def download_runoff_data():
         filename = url.split("/")[-1]
         destination = base_dir / filename
 
-        print(f"⏳ Téléchargement de {filename}...", end="\r")
+        #print(f"⏳ Téléchargement de {filename}...", end="\r")
 
         try:
             # Requête de téléchargement
@@ -828,12 +825,12 @@ def download_runoff_data():
                     for chunk in response.iter_content(chunk_size=8192):
                         if chunk:
                             f.write(chunk)
-                print(f"✅ Terminé : {filename}          ")
+                print(f" Done! : {filename}          ")
             else:
-                print(f"❌ Erreur {response.status_code} pour : {filename}")
+                print(f" Error {response.status_code} pour : {filename}")
 
         except Exception as e:
-            print(f"💥 Échec pour {filename} : {e}")
+            print(f"💥 Failure for {filename} : {e}")
 
 
 ###### Soil Moisture ######
@@ -843,7 +840,7 @@ def download_xsm_data():
     base_dir = Path(__file__).resolve().parents[1] / "data" / "spi" / "data" / "Soilmoisture"
     base_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"🚀 Début du téléchargement vers : {base_dir.resolve()}")
+    #print(f"🚀 Début du téléchargement vers : {base_dir.resolve()}")
     urls_xsm= [
         "https://ftp.cpc.ncep.noaa.gov/fews/DroughtMonitor/SoilMoisture/drymask12.bin",
         "https://ftp.cpc.ncep.noaa.gov/fews/DroughtMonitor/SoilMoisture/drymask12.ctl",
@@ -874,7 +871,7 @@ def download_xsm_data():
         filename = url.split("/")[-1]
         destination = base_dir / filename
 
-        print(f"⏳ Téléchargement de {filename}...", end="\r")
+        #print(f"⏳ Téléchargement de {filename}...", end="\r")
 
         try:
             # Requête de téléchargement
@@ -886,12 +883,12 @@ def download_xsm_data():
                     for chunk in response.iter_content(chunk_size=8192):
                         if chunk:
                             f.write(chunk)
-                print(f"✅ Terminé : {filename}          ")
+                print(f"✅ Done : {filename}          ")
             else:
-                print(f"❌ Erreur {response.status_code} pour : {filename}")
+                print(f" Error {response.status_code} pour : {filename}")
 
         except Exception as e:
-            print(f"💥 Échec pour {filename} : {e}")
+            print(f" Failure for {filename} : {e}")
 
 # --- Ta liste d'URLs ---
 

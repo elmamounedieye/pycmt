@@ -23,7 +23,7 @@ def generate_html_map(country_name, rndta):
     period = [7, 10, 30, 60, 90, 180]
 
     npixtot = len(lines)
-    print(f"========== The total number of points is : {npixtot}")
+    #print(f"========== The total number of points is : {npixtot}")
     for periods in period:
         # 3. Génération des balises <area>
         areas_html = []
@@ -108,7 +108,7 @@ def generate_html_map(country_name, rndta):
         with open(full_path, "w", encoding="utf-8") as f:
             f.write(html_content)
 
-        print(f"Fichier généré avec succès : {full_path}")
+        print(f"File successfully generated  : {full_path}")
         
 
 ################ Generate country dashboard ##################
@@ -142,7 +142,7 @@ def build_country_dashboard(country_name, rndta):
         if files:
             # On extrait le nombre après 'vhi' dans le nom du fichier
             data["vhi_weeks"] = sorted([int(f.stem.split('vhi')[-1]) for f in files])
-            print(f"✅ {len(data['vhi_weeks'])} semaines VHI détectées.")
+            print(f"✅ {len(data['vhi_weeks'])} VHI weeks detected.")
 
     # 2. Détection Stations (Points)
     # Important pour générer la grille "Time Series" dans le HTML
@@ -159,14 +159,14 @@ def build_country_dashboard(country_name, rndta):
             periods.append(p)
         
         data["ts_periods"] = sorted(list(set(periods)), key=int)
-        print(f"✅ {len(data['ts_periods'])} périodes HTML détectées : {data['ts_periods']}")
+        print(f"✅ {len(data['ts_periods'])} detected HTML periods : {data['ts_periods']}")
 
     # --- GÉNÉRATION DU FICHIER HTML ---
-    print(f"🛠️  Génération du dashboard : {output_name}")
+    print(f"🛠️  Dashboard generation : {output_name}")
     
     try:
         if not template_name.exists():
-            raise FileNotFoundError(f"Le template est introuvable à l'adresse : {template_name}")
+            raise FileNotFoundError(f"Template not found at the url : {template_name}")
 
         # Lecture du template
         with open(template_name, 'r', encoding='utf-8') as f:
@@ -181,7 +181,7 @@ def build_country_dashboard(country_name, rndta):
         with open(output_name, 'w', encoding='utf-8') as f:
             f.write(html_rendered)
             
-        print(f"🚀 Dashboard {country_name} finalisé.")
+        print(f"🚀 Dashboard {country_name} completed.")
 
         # --- OUVERTURE AUTOMATIQUE ---
         abs_path = os.path.abspath(output_name)
@@ -189,7 +189,7 @@ def build_country_dashboard(country_name, rndta):
         file_url = f"file:///{abs_path.replace(os.sep, '/')}"
         
         webbrowser.open(file_url)
-        print(f"🌐 Ouverture dans le navigateur effectuée.")
+        print(f"🌐 Opening browser.")
 
     except Exception as e:
-        print(f"❌ Erreur lors de la génération : {str(e)}")
+        print(f"❌ Error during generation : {str(e)}")

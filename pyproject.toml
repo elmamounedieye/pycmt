@@ -17,6 +17,7 @@ dependencies = [
     "cftime",
     "dask",
     "geopandas",
+    "ipywidgets",
     "Jinja2",
     "matplotlib",
     "netCDF4",
@@ -37,8 +38,8 @@ dependencies = [
     "xgrads"
 ]
 
-[project.scripts]
-pycmt = "pycmt:climonitor"
+#[project.scripts]
+#pycmt = "pycmt:climonitor"
 
 [tool.setuptools]
 # AUTOMATION : Force la recherche récursive de TOUS tes sous-dossiers (core, modules, visualization)

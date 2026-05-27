@@ -70,7 +70,7 @@ def plot_precip(rsl, rsl_name, country_iso, country, rndta):
     # =========================================================
     # 2. DATA LOAD & REPARATION UNIQUE SHP (Hors boucle)
     # =========================================================
-    print("📂 Chargement des données...")
+    print("Loading data...")
 
     mask_nc = xr.open_dataset(mask_path)
     daily_data = open_CtlDataset(os.path.relpath(daily_precip_path))
