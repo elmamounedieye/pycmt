@@ -29,8 +29,9 @@ from IPython.display import display
 import ipywidgets as widgets
 import pycmt
 
-def upload_file(allowed_extensions=".ctl, .nc, .txt, .idx", subfolder="data"):
-    dest_dir = Path(pycmt.__file__).resolve() / subfolder
+def run_uploader(allowed_extensions=".ctl, .nc, .txt, .idx", subfolder="data"):
+    """Interface de téléversement de données intégrée pour Jupyter Notebook."""
+    dest_dir = Path(pycmt.__file__).resolve().parent / subfolder
     dest_dir.mkdir(parents=True, exist_ok=True)
 
     uploader = widgets.FileUpload(accept=allowed_extensions, multiple=False)
@@ -42,17 +43,14 @@ def upload_file(allowed_extensions=".ctl, .nc, .txt, .idx", subfolder="data"):
             out.clear_output()
             if not uploader.value:
                 return print("⚠️ Please, select a file first.")
-            
             try:
-                # Extraction universelle (Gère v7 et v8+ d'ipywidgets en une ligne)
                 info = uploader.value[0] if isinstance(uploader.value, (list, tuple)) else list(uploader.value.values())[0]
                 name = info.get("name") or info.get("metadata", {}).get("name")
                 
                 dest_path = dest_dir / name
                 with open(dest_path, "wb") as f:
                     f.write(bytes(info["content"]))
-                
-                print(f"SUCCESS: [{name}] saved.\nPath: {dest_path.resolve().as_posix()}")
+                print(f"✅ SUCCESS: [{name}] saved.\nPath: {dest_path.resolve().as_posix()}")
             except Exception as e:
                 print(f"❌ Error: {str(e)}")
 
