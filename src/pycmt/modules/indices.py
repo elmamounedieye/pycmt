@@ -60,7 +60,7 @@ def get_week_logic(days_ago):
     # Sécurité fin d'année
     if julian_day > 357:
         end_date = datetime(year, 12, 31)
-    print(f" Ending Getting week info")
+    #print(f" Ending Getting week info")
     return {
         "year": year,
         "week_str": f"{week_num:02d}",
@@ -82,15 +82,15 @@ def prepare_data_for_week(wk_info, week_idx, vhi_path):
     source_file = None
     for sat in ["npp", "j01"]:
         f_name = f"{prefix}.{sat}.{suffix}"
-        print(f"{f_name}")
-        print(f"{vhi_path}")
+        #print(f"{f_name}")
+        #print(f"{vhi_path}")
         f_name = Path(vhi_path) / f_name
-        print(f"{f_name}")
+        #print(f"{f_name}")
         if os.path.exists(f_name):
             source_file = f_name
             break
-    cur = os.getcwd()
-    print(f"current path === {cur}")
+    #cur = os.getcwd()
+    #print(f"current path === {cur}")
     if not source_file:
         print(f"!!! Données manquantes : Semaine {wk_info['week_str']} ({wk_info['year']})")
         return
@@ -115,7 +115,7 @@ def prepare_data_for_week(wk_info, week_idx, vhi_path):
     print(f"YDEL    : {ydel}")    
     #if os.path.exists("vhi.nc"):
     #    os.remove("vhi.nc")
-    print(f" Ending preparing data for week")
+    #print(f" Ending preparing data for week")
 
 
 def get_vhi_colormap():
@@ -138,16 +138,16 @@ def get_vhi_colormap():
     return cmap, norm, levels # On retourne aussi levels pour le plot
 
 def load_config_extent(path_fix):
-    print(f" starting loading extents")
-    print(f"Loading extents")
-    dir = os.getcwd()
-    print(f"Load extents  CWD: {dir}")
+    #print(f" starting loading extents")
+    #print(f"Loading extents")
+    #dir = os.getcwd()
+    #print(f"Load extents  CWD: {dir}")
     with open(path_fix, 'r') as f:
         line = f.readline().split()
         country = line[0]
         lat1, lat2 = float(line[1]), float(line[2])
         lon1, lon2 = float(line[3]), float(line[4])
-    print(f" Ending loading extents")
+    #print(f" Ending loading extents")
     return {
         "name": country,
         "lat_range": (lat1, lat2),
@@ -158,7 +158,7 @@ def load_config_extent(path_fix):
 def prepare_vhi_data(path_vhi, path_mask):
 
     
-    print(f" Starting Preparing VHI data")
+    #print(f" Starting Preparing VHI data")
     ds = xr.open_dataset(path_vhi) #r'vhi.nc')
     ds = ds.assign_coords({
                 "lat": ds.latitude,
@@ -171,7 +171,7 @@ def prepare_vhi_data(path_vhi, path_mask):
     
     mask_ds = xr.open_dataset(path_mask)
     mask_interp = mask_ds['mask_data'].interp(lat=vhi.lat, lon=vhi.lon, method="nearest")
-    print(f" Ending Preparing VHI data")
+    #print(f" Ending Preparing VHI data")
     return vhi.where(mask_interp == 1) #&(land_interp ==1))
 
 
@@ -218,7 +218,7 @@ def plot_vhi_map(da, extent_info, path_shp, wk_info, output_dir, country):
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
     plt.close(fig)
     #print(f"Fichier créé : {output_path}")
-    print(f"Ending Generating VHI maps")
+    #print(f"Ending Generating VHI maps")
 
 
 def do_vhi(country, country_iso):
