@@ -62,20 +62,22 @@ def plot_precip_ts(country: str, rndta: str, rsl, ts_rsl):
     if country == "Africa":
         country_iso = "AFR"
         
-        # Cherche le dossier AFR_adm là où l'utilisateur exécute son Notebook
-        source = Path.cwd() / "data" / "AFR_adm"
-        
-        # Destination interne au package pour que le reste du code le trouve
+        # __file__ = src/pycmt/climonitor.py
+        # .parent correspond au dossier src/pycmt/
         package_root = Path(__file__).resolve().parent
+        
+        # Cible le vrai dossier data interne : src/pycmt/data/AFR_adm
+        source = package_root / "data" / "AFR_adm"
+        
+        # On définit la destination directement dans les ressources du package
         destination = package_root / "data" / "gis_resources" / "countries" / "AFR_adm"
+        
+        # Sécurité : on s'assure que le dossier parent existe
         destination.parent.mkdir(parents=True, exist_ok=True)
 
-        if not source.exists():
-            raise FileNotFoundError(
-                f"Please, put the folder 'AFR_adm' in your current working directory : {source}"
-            )
-
+        # Utilisation de dirs_exist_ok=True pour éviter de planter si le dossier de destination existe déjà
         shutil.copytree(source, destination, dirs_exist_ok=True)
+        print("✅ Dossier AFR_adm copié vers les ressources géospatiales internes.")
     else:
         country_iso = get_country_iso(country)
         print(f" country iso : {country_iso}")
