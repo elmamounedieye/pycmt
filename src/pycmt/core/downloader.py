@@ -115,25 +115,43 @@ def rename_country_shapefiles(country_iso):
 def download_arc2_data(init_day_offset=0):
     # 1. Configuration des chemins
     base_dir = Path(__file__).resolve().parents[1]
-    daily_dir = Path(__file__).resolve().parents[1] / "data" / "ARC2" /"arc2"
-    clim_dir = Path(__file__).resolve().parents[1]/ "data" / "ARC2" / "arc2_clim"
+    daily_dir = Path(__file__).resolve().parents[1] / "data" / "ARC2" / "arc2"
+    clim_dir = Path(__file__).resolve().parents[1] / "data" / "ARC2" / "arc2_clim"
     
-    # Création des dossiers s'ils n'existent pas
     daily_dir.mkdir(parents=True, exist_ok=True)
     clim_dir.mkdir(parents=True, exist_ok=True)
 
-    # 2. Paramètres de temps
+    # 2. Détermination de la date de départ réelle (Validation du premier fichier disponible)
     today = datetime.now() - timedelta(days=init_day_offset)
+    print(f"🔍 Recherche de la dernière donnée ARC2 disponible à partir de : {today.strftime('%Y-%m-%d')}...")
     
-    print(f"🚀 Downloading ARC2 (180 days)...")
-    print(f"today {today}")
+    while True:
+        # On teste le fichier le plus récent requis (qui correspond à i=1 dans ton ancienne logique)
+        target_date = today - timedelta(days=1)
+        date_str = target_date.strftime("%Y%m%d")
+        daily_filename = f"daily_clim.bin.{date_str}"
+        daily_path = daily_dir / daily_filename
+        daily_url = f"https://ftp.cpc.ncep.noaa.gov/fews/fewsdata/africa/arc2/bin/{daily_filename}.gz"
+        
+        # Tentative de téléchargement du premier fichier
+        if manage_download(daily_url, daily_path, is_gzip=True):
+            print(f"✨ Date de départ validée : {target_date.strftime('%Y-%m-%d')}")
+            break # On a trouvé notre date de départ, on sort de la recherche
+        else:
+            print(f"⚠️ Donnée du {target_date.strftime('%Y-%m-%d')} indisponible. Tentative sur le jour précédent...")
+            today -= timedelta(days=1) # On décale "today" d'un jour et on recommence
+            
+    # 3. Téléchargement des N (180) données à partir de la nouvelle date validée
+    print(f"🚀 Downloading ARC2 (180 days) starting from verified date...")
+    
+    # Note : Le premier fichier (i=1) a déjà été téléchargé par la boucle while ci-dessus,
+    # mais manage_download le détectera et passera directement sans le retélécharger.
     for i in range(1, 181):
         target_date = today - timedelta(days=i)
         date_str = target_date.strftime("%Y%m%d")      # AAAAMMDD
         date_short = target_date.strftime("%m%d")      # MMDD
         
-        #if date_str != "20260417" and date_short !="0417":
-            # --- PHASE A : DONNÉES QUOTIDIENNES ---
+        # --- PHASE A : DONNÉES QUOTIDIENNES ---
         daily_filename = f"daily_clim.bin.{date_str}"
         daily_path = daily_dir / daily_filename
         daily_url = f"https://ftp.cpc.ncep.noaa.gov/fews/fewsdata/africa/arc2/bin/{daily_filename}.gz"
@@ -147,7 +165,7 @@ def download_arc2_data(init_day_offset=0):
         
         manage_download(clim_url, clim_path, is_gzip=False)
 
-    # 3. GÉNÉRATION DES FICHIERS .CTL (Templates)
+    # 4. GÉNÉRATION DES FICHIERS .CTL (Ajusté sur la vraie date de fin de la série)
     start_date_str = (today - timedelta(days=180)).strftime("%d%b%Y")
     
     generate_ctl(
@@ -157,25 +175,26 @@ def download_arc2_data(init_day_offset=0):
     )
     
     generate_ctl(
-        template_name=base_dir / "data" /"template_arc2_clim.ctl",
+        template_name=base_dir / "data" / "template_arc2_clim.ctl",
         output_path=clim_dir / "arc2_clim.ctl",
         replacements={"CLMDLDATADIR": "^", "STDATE": start_date_str}
     )
 
 def manage_download(url, dest_path, is_gzip=False, min_size_kb=2000):
-    """Gère la vérification, le téléchargement et la décompression."""
-    # Vérification si le fichier existe et est valide
+    """Gère la vérification, le téléchargement et la décompression.
+       Retourne True si le fichier est dispo/téléchargé, False sinon."""
+    
+    # Vérification si le fichier existe et est valide localement
     if dest_path.exists() and (dest_path.stat().st_size / 1024) > min_size_kb:
-        return # Fichier déjà présent et OK
+        return True 
 
     print(f"⏳ Downloading : {dest_path.name}...")
     
     try:
-        response = requests.get(url, stream=True, timeout=30)
+        response = requests.get(url, stream=True, timeout=15) # Timeout réduit pour ne pas bloquer trop longtemps si indisponible
         response.raise_for_status()
         
         if is_gzip:
-            # Décompression à la volée
             with gzip.GzipFile(fileobj=response.raw) as gfile:
                 with open(dest_path, 'wb') as f_out:
                     shutil.copyfileobj(gfile, f_out)
@@ -184,44 +203,38 @@ def manage_download(url, dest_path, is_gzip=False, min_size_kb=2000):
                 for chunk in response.iter_content(chunk_size=8192):
                     f_out.write(chunk)
         print(f"   ✅ OK")
+        return True
         
     except Exception as e:
         print(f"   ❌ Error on {dest_path.name}: {e}")
+        # Si le fichier incomplet/corrompu a été créé à cause de l'erreur, on le supprime
+        if dest_path.exists():
+            dest_path.unlink()
+        return False
 
 def generate_ctl(template_name, output_path, replacements):
+    # (Ton code reste identique pour cette fonction)
     template_path = Path(template_name)
     if not template_path.exists():
         print(f"⚠️ Template {template_name} not found.")
         return
 
     content = template_path.read_text()
-    
     for key, value in replacements.items():
         if "DIR" in key:
-            # On remplace la balise par le chapeau seul
-            # Ainsi, ^DLDATADIR devient ^
-            # Et si le template n'avait pas de ^, on l'ajoute ici
             content = content.replace(key, "^")
         else:
             content = content.replace(key, str(value))
     
-    # --- NETTOYAGE DES DOUBLONS ---
-    content = content.replace('^^', '^')   # Au cas où le template avait déjà un ^
-    content = content.replace('^\\', '^')  # Supprime l'antislash parasite
-    content = content.replace('^/', '^')   # Supprime le slash parasite
+    content = content.replace('^^', '^')
+    content = content.replace('^\\', '^')
+    content = content.replace('^/', '^')
     
     output_path.write_text(content)
     print(f"📝 CTL généré : {output_path.name}")
 
 
-
 ########## RFE2 
-import os
-import gzip
-import shutil
-import requests
-from datetime import datetime, timedelta
-from pathlib import Path
 
 def download_rfe2(days_offset=0):
     base_dir = Path(__file__).resolve().parents[1] / "data"
@@ -233,11 +246,64 @@ def download_rfe2(days_offset=0):
     
     NORMAL_SIZE = 2406204
 
-    yesterday = datetime.now().date() - timedelta(days=(days_offset + 1))
+    # 1. Dynamically find the latest available date on the NOAA server
+    base_date = datetime.now() - timedelta(days=days_offset)
+    print(f"🔍 Searching for the latest available RFE2 data on the server...")
+    
+    actual_days_offset = days_offset
+    shift_days = 1
+    
+    while True:
+        target_date = base_date - timedelta(days=shift_days)
+        date_str = target_date.strftime("%Y%m%d")  
+        file_name = f"all_products.bin.{date_str}"
+        gz_name = f"{file_name}.gz"
+        file_url = f"https://ftp.cpc.ncep.noaa.gov/fews/fewsdata/africa/rfe2/bin/{gz_name}"
+        file_path = output_dir / file_name
+        temp_gz = base_dir / gz_name
+
+        # Check if file is already valid on disk
+        if file_path.exists() and file_path.stat().st_size == NORMAL_SIZE:
+            print(f"✨ Validated start date (already on disk): {target_date.strftime('%Y-%m-%d')}")
+            actual_days_offset = days_offset + (shift_days - 1)
+            break
+
+        # If not on disk, try downloading it to check server availability
+        print(f"⏳ Checking availability for: {file_name}...")
+        try:
+            response = requests.get(file_url, stream=True, timeout=15)
+            if response.status_code == 200:
+                with open(temp_gz, 'wb') as f:
+                    f.write(response.content)
+                
+                with gzip.open(temp_gz, 'rb') as f_in:
+                    with open(file_path, 'wb') as f_out:
+                        shutil.copyfileobj(f_in, f_out)
+                
+                temp_gz.unlink()
+                
+                if file_path.stat().st_size == NORMAL_SIZE:
+                    print(f"   ✅ OK - Validated start date: {target_date.strftime('%Y-%m-%d')}")
+                    actual_days_offset = days_offset + (shift_days - 1)
+                    break
+                else:
+                    print(f"   ❌ Corrupted server file (wrong size), rolling back to previous day.")
+                    file_path.unlink()
+            else:
+                print(f"   ⚠️ Data for {target_date.strftime('%Y-%m-%d')} unavailable. Trying previous day...")
+        except Exception as e:
+            print(f"   ❌ Network/Extraction error: {e}")
+            if file_path.exists(): file_path.unlink()
+            if temp_gz.exists(): temp_gz.unlink()
+            
+        shift_days += 1
+
+    # 2. Compute missing days relative to this verified reference date
+    yesterday_verified = datetime.now().date() - timedelta(days=(actual_days_offset + 1))
     existing_files = list(output_dir.glob("all_products.bin.*"))
     
     if not existing_files:
-        print("No file found. Download completed (180 days).")
+        print("No files found on disk. Full 180-day download required.")
         n_missing = 180
     else:
         dates_in_disk = []
@@ -250,19 +316,20 @@ def download_rfe2(days_offset=0):
         
         if dates_in_disk:
             last_disk_date = max(dates_in_disk)
-            n_missing = (yesterday - last_disk_date).days
+            n_missing = (yesterday_verified - last_disk_date).days
         else:
             n_missing = 180
 
     if n_missing <= 0:
-        print("✅ Data up to data. No processing required.")
+        print("✅ Data is completely up to date. No processing required.")
         return
         
-    print(f"🔄 Delay : {n_missing} days not downloaded (D-{n_missing}).")
-    print(f"\n Synchronized retrieval (Prepitation + Climatology) over 180 days...")
+    print(f"🔄 Delay: {n_missing} days missing from local disk (D-{n_missing}).")
+    print(f"\nSynchronized retrieval (Precipitation + Climatology) over 180 days...")
 
+    # 3. Main download loop aligned with the verified available timeline
     for i in range(1, 181):
-        target_date = datetime.now() - timedelta(days=(days_offset + i))
+        target_date = datetime.now() - timedelta(days=(actual_days_offset + i))
         date_str = target_date.strftime("%Y%m%d")  
         mmdd = target_date.strftime("%m%d")        
         
@@ -270,42 +337,46 @@ def download_rfe2(days_offset=0):
         gz_name = f"{file_name}.gz"
         file_url = f"https://ftp.cpc.ncep.noaa.gov/fews/fewsdata/africa/rfe2/bin/{gz_name}"
         file_path = output_dir / file_name
+        temp_gz = base_dir / gz_name
 
+        # A. Download Precipitation if not already fetched
         if not (file_path.exists() and file_path.stat().st_size == NORMAL_SIZE):
-            print(f" Downloading precipitation : {date_str}...")
+            print(f"⏳ Downloading precipitation: {file_name}...")
             try:
-                response = requests.get(file_url, stream=True, timeout=30)
+                response = requests.get(file_url, stream=True, timeout=15)
                 if response.status_code == 200:
-                    temp_gz = base_dir / gz_name
                     with open(temp_gz, 'wb') as f:
                         f.write(response.content)
-                    
                     with gzip.open(temp_gz, 'rb') as f_in:
                         with open(file_path, 'wb') as f_out:
                             shutil.copyfileobj(f_in, f_out)
-                    
                     temp_gz.unlink()
+                    print(f"   ✅ OK")
                 else:
-                    print(f" Not available on the server : all_products.bin.{date_str}")
+                    print(f"   ❌ Server missing file: {file_name}")
             except Exception as e:
-                print(f" Precipitation error {date_str} : {e}")
+                print(f"   ❌ Precipitation error for {date_str}: {e}")
+                if file_path.exists(): file_path.unlink()
+                if temp_gz.exists(): temp_gz.unlink()
 
+        # B. Download Climatology
         clim_file_name = f"clim_dly.{mmdd}"
         clim_file_path = clim_dir / clim_file_name
         clim_url = f"https://ftp.cpc.ncep.noaa.gov/fews/clim_dly/clim_RFE2/{clim_file_name}"
 
         if not (clim_file_path.exists() and clim_file_path.stat().st_size == NORMAL_SIZE):
-            print(f"Downloading climatology day-per-day : {mmdd}...")
+            print(f"⏳ Downloading climatology day-by-day: {mmdd}...")
             try:
                 response = requests.get(clim_url, timeout=20)
                 if response.status_code == 200:
                     with open(clim_file_path, "wb") as f:
                         f.write(response.content)
                 else:
-                    print(f" Not available on the server : clim_dly.{mmdd}")
+                    print(f"   ❌ Server missing file: clim_dly.{mmdd}")
             except Exception as e:
-                print(f" Climatology error {mmdd} : {e}")
+                print(f"   ❌ Climatology error for {mmdd}: {e}")
 
+    # 4. History Cleanup (Keep a maximum of 180 daily files)
     post_files = list(output_dir.glob("all_products.bin.*"))
     valid_files_with_dates = []
 
@@ -320,15 +391,16 @@ def download_rfe2(days_offset=0):
         valid_files_with_dates.sort(key=lambda x: x[0])
         to_delete = valid_files_with_dates[:len(valid_files_with_dates) - 180]
         
-        print(f"\nCleaning history :Deleting {len(to_delete)} previous days...")
+        print(f"\nCleaning history: Deleting {len(to_delete)} older days...")
         for f_date, f_path in to_delete:
             try:
                 f_path.unlink()
-                print(f"Deleted : {f_path.name} ({f_date})")
+                print(f"Deleted: {f_path.name} ({f_date})")
             except Exception as e:
-                print(f"⚠️ Impossible to delete {f_path.name} : {e}")
+                print(f"⚠️ Unable to delete {f_path.name}: {e}")
 
-    start_date = datetime.now() - timedelta(days=(days_offset + 180))
+    # 5. Generate template CTL files synchronized with the actual timeline
+    start_date = datetime.now() - timedelta(days=(actual_days_offset + 180))
     start_date_str = start_date.strftime("%d%b%Y")
 
     generate_ctl(
@@ -343,8 +415,7 @@ def download_rfe2(days_offset=0):
         replacements={"NNDAYS": 180, "STDATE": start_date_str}
     )
 
-    print(f"\n✅ 180 days range updated and synchronized (Beginning CTL : {start_date_str}).")
-
+    print(f"\n✅ 180 days range updated and synchronized (CTL Start Date: {start_date_str}).")
 
 
 
