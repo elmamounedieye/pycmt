@@ -61,10 +61,11 @@ def run_uploader(allowed_extensions=".ctl, .nc, .txt, .idx", subfolder="data"):
 def plot_precip_ts(country: str, rndta: str, rsl, ts_rsl):
     if country == "Africa":
         country_iso = "AFR"
-        source = Path.cwd().resolve().parent[1] / "data" / "AFR_adm"
-        destination = Path.re / "data" / "gis_resources" / "countries"
-        destination.mkdir(parents=True, exist_ok=True)
-        shutil.copytree(source, destination)
+        source = Path(__file__).resolve().parents[1] / "data" / "AFR_adm"
+        destination = Path(__file__).resolve().parents[1] / "data" / "gis_resources" / "countries"
+        
+        # Correction pour shutil.copytree
+        shutil.copytree(source, destination, dirs_exist_ok=True)
     else:
         country_iso = get_country_iso(country)
         print(f" country iso : {country_iso}")
