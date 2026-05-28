@@ -61,10 +61,20 @@ def run_uploader(allowed_extensions=".ctl, .nc, .txt, .idx", subfolder="data"):
 def plot_precip_ts(country: str, rndta: str, rsl, ts_rsl):
     if country == "Africa":
         country_iso = "AFR"
-        source = Path(__file__).resolve().parents[1] / "data" / "AFR_adm"
-        destination = Path(__file__).resolve().parents[1] / "data" / "gis_resources" / "countries"
         
-        # Correction pour shutil.copytree
+        # Cherche le dossier AFR_adm là où l'utilisateur exécute son Notebook
+        source = Path.cwd() / "data" / "AFR_adm"
+        
+        # Destination interne au package pour que le reste du code le trouve
+        package_root = Path(__file__).resolve().parent
+        destination = package_root / "data" / "gis_resources" / "countries" / "AFR_adm"
+        destination.parent.mkdir(parents=True, exist_ok=True)
+
+        if not source.exists():
+            raise FileNotFoundError(
+                f"Please, put the folder 'AFR_adm' in your current working directory : {source}"
+            )
+
         shutil.copytree(source, destination, dirs_exist_ok=True)
     else:
         country_iso = get_country_iso(country)
