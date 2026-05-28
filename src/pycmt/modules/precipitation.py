@@ -14,6 +14,7 @@ from pathlib import Path
 import matplotlib.path as mpath
 import shapely.geometry as sgeom
 from shapely.validation import make_valid
+import platform
 
 
 def apply_clean_smoothing(da, sigma=1.0):
@@ -58,12 +59,12 @@ def plot_precip(rsl, rsl_name, country_iso, country, rndta):
     base_dir = Path(__file__).resolve().parents[1] / "data"
     mask_path = base_dir / "gis_resources" / f"country_masks{rsl_name}" / "365dcal" / f"{country_iso}_mask.nc"
     if rndta.lower() == "arc2":
-        daily_precip_path = (base_dir / "ARC2" / "arc2" / "arc2.ctl").resolve()
-        clim_path = (base_dir / "ARC2" / "arc2_clim" / "arc2_clim.ctl").resolve()
+        daily_precip_path = (base_dir / "ARC2" / "arc2" / "arc2.ctl")#.resolve()
+        clim_path = (base_dir / "ARC2" / "arc2_clim" / "arc2_clim.ctl")#.resolve()
         precip_var = "pmer2"
     elif rndta.lower() == "rfe2": 
-        daily_precip_path = (base_dir / "rfe2_data" / "rfe2_daily" / "rfe2daily.ctl").resolve()
-        clim_path = (base_dir / "rfe2_data" / "rfe2_clim" / "rfe2clim.ctl").resolve()
+        daily_precip_path = (base_dir / "rfe2_data" / "rfe2_daily" / "rfe2daily.ctl")#.resolve()
+        clim_path = (base_dir / "rfe2_data" / "rfe2_clim" / "rfe2clim.ctl")#.resolve()
         precip_var = "r"
     shap_path = base_dir / "gis_resources" / "countries" / f"{country_iso}_adm" / f"{country_iso}_adm1.shp"
 
@@ -73,8 +74,26 @@ def plot_precip(rsl, rsl_name, country_iso, country, rndta):
     print("Loading data...")
 
     mask_nc = xr.open_dataset(mask_path)
-    daily_data = open_CtlDataset(os.path.relpath(daily_precip_path))
-    clim_data = open_CtlDataset(os.path.relpath(clim_path))
+    #daily_data = open_CtlDataset(os.path.relpath(daily_precip_path))
+    #clim_data = open_CtlDataset(os.path.relpath(clim_path))
+
+    abs_daily_path = daily_precip_path.resolve()
+    abs_clim_path = clim_path.resolve()
+
+    # 4. Normalisation pour contrer le bug de xgrads sous Windows
+    if platform.system() == "Windows":
+        # Force l'usage de slashes '/' pour empêcher xgrads d'ajouter './' devant 'C:/'
+        final_daily_path = abs_daily_path.as_posix()
+        final_clim_path = abs_clim_path.as_posix()
+    else:
+        # Format natif pour Linux et macOS (contient déjà des slashes '/')
+        final_daily_path = str(abs_daily_path)
+        final_clim_path = str(abs_clim_path)
+
+    # 5. Ouverture sécurisée des fichiers de données GrADS
+    daily_data = open_CtlDataset(final_daily_path)
+    clim_data = open_CtlDataset(final_clim_path)
+
 
     # Chargement et réparation unique du Shapefile
     shp_adm1 = gpd.read_file(shap_path)
