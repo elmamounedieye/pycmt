@@ -26,25 +26,29 @@ from pycmt.visualization.generate_grid import generate_pixel_arguments, plot_pix
 from pycmt.visualization.generate_html import build_country_dashboard, generate_html_map
 
 app = FastAPI(
-    title="⚡ PyCMT Climate Monitor API",
-    description="API de suivi, monitoring et traitement de données géospatiales et climatiques",
+    title="⚡ PyCMT Climate Monitoring API",
+    description="Monitoring API for climate and geospatial processing",
     version="1.0.0"
 )
 
-# Configuration de la correspondance de résolution
 RESOLUTION_CONFIG = {
     0.036: '0p036', 0.0375: '0p0375', 0.25: '0p25',
     0.5: '0p5', 0.1: '0p1', 1.0: '1p0'
 }
 
 # =========================================================================
-# PIPELINES DE TRAITEMENT (Fonctions exécutées en arrière-plan)
 # =========================================================================
 
-def pipeline_climonitor_complet(country: str, rndta: str, rsl: float, ts_rsl: float):
-    """Orchestrateur complet de calcul s'exécutant en arrière-plan."""
+def pipeline_climonitor_complet(
+    country: str, 
+    rndta: str, 
+    rsl: float, 
+    ts_rsl: float,
+    run_spp: bool,
+    run_spi: bool,
+    run_vhi: bool
+):
     try:
-        # 1. Gestion du cas spécifique Afrique ou pays classique
         if country == "Africa":
             country_iso = "AFR"
             package_root = Path(__file__).resolve().parent
@@ -56,35 +60,63 @@ def pipeline_climonitor_complet(country: str, rndta: str, rsl: float, ts_rsl: fl
             country_iso = get_country_iso(country)
             download_gadm_country(country_iso)
         
-        # 2. Génération des masques et coordonnées pixels
         run_workflow(country_iso, country)
         generate_pixel_arguments(ts_rsl, country_iso, country)
         plot_pix_coordinates(country, country_iso, rndta)
         
-        # 3. Téléchargements sources de précipitations
         if rndta.lower() == "arc2":
             download_arc2_data()
         elif rndta.lower() == "rfe2":
             download_rfe2()
 
-        # 4. Traitements géospatiaux et graphiques
         plot_precip(rsl, RESOLUTION_CONFIG[rsl], country_iso, country, rndta)
         generate_tseries(country_iso, country, rndta)
         generate_html_map(country, rndta)
         
-        # 5. Déclenchement automatique du Dashboard final
+        
+        # --- Module SPP ---
+        if run_spp:
+            print(f"📥 Downloading and generating SPP for {country}...")
+            download_spp_noaa("rfe2")
+            download_spp_noaa("cmorph")
+            run_orchestrator_spp(country, country_iso, "rfe2")
+            run_orchestrator_spp(country, country_iso, "cmorph")
+            print(f"✅ SPP Done.")
+
+        # --- Module SPI / Runoff / Soil Moisture ---
+        if run_spi:
+            print(f"📥 Downloading and generating SPI, Runoff and Soil Moisture for {country}...")
+            download_runoff_data()
+            download_xsm_data()
+            download_spi("cmorph")
+            download_spi("rfe2")
+            generate_runoff(country_iso, country)
+            generate_soilmoisture(country_iso, country)
+            calc_spi(country_iso, country, "cmorph")
+            calc_spi(country_iso, country, "rfe2")
+            print(f"✅ SPI, Runoff and Soil Moisture Done.")
+
+        # --- Module VHI ---
+        if run_vhi:
+            print(f"📥 Donwloading and generating VHI for {country}...")
+            run_retrieval_vhi()
+            do_vhi(country, country_iso)
+            print(f"✅ VHI Done.")
+
         build_country_dashboard(country, rndta)
-        print(f"🎉 Pipeline API réussi pour {country} ({rndta})")
+        print(f"🎉 API pipeline successful for {country} ({rndta})")
         
     except Exception as e:
-        print(f"❌ Échec de la pipeline en arrière-plan : {str(e)}")
+        print(f"Background pipeline failure : {str(e)}")
 
-@app.post("/upload-data/", tags=["Données"])
+
+# =========================================================================
+# ENDPOINTS / ROUTES API
+# =========================================================================
+
+@app.post("/upload-data/", tags=["Data"])
 async def upload_custom_file(subfolder: str = "data", file: UploadFile = File(...)):
-    """
-    Remplace l'uploader ipywidgets. Permet d'envoyer un fichier (.ctl, .nc, etc.) 
-    directement dans les répertoires internes du package.
-    """
+    
     dest_dir = Path(pycmt.__file__).resolve().parent / subfolder
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest_path = dest_dir / file.filename
@@ -94,10 +126,8 @@ async def upload_custom_file(subfolder: str = "data", file: UploadFile = File(..
             shutil.copyfileobj(file.file, buffer)
         return {"status": "success", "filename": file.filename, "saved_at": str(dest_path.resolve())}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la sauvegarde : {str(e)}")
-# =========================================================================
-# ENDPOINTS / ROUTES API
-# =========================================================================
+        raise HTTPException(status_code=500, detail=f"Error during saving : {str(e)}")
+
 
 @app.post("/run-monitor/", tags=["Calculs"])
 async def run_climate_monitor(
@@ -105,42 +135,41 @@ async def run_climate_monitor(
     source_data: str, 
     resolution: float, 
     timeseries_resolution: float,
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
+    run_spp: bool = True,
+    run_spi: bool = True,
+    run_vhi: bool = True
 ):
-    """
-    Lance la pipeline complète de monitoring pour un pays donné.
-    Le calcul s'exécute en tâche de fond pour éviter de bloquer l'API.
-    """
+   
     if resolution not in RESOLUTION_CONFIG:
-        raise HTTPException(status_code=400, detail=f"Résolution invalide. Choisissez parmi : {list(RESOLUTION_CONFIG.keys())}")
+        raise HTTPException(status_code=400, detail=f"Invalid resolution. Please choose among : {list(RESOLUTION_CONFIG.keys())}")
         
     if source_data.lower() not in ["arc2", "rfe2"]:
-        raise HTTPException(status_code=400, detail="Source de données invalide. Choisissez 'arc2' ou 'rfe2'.")
+        raise HTTPException(status_code=400, detail="Invalid data soure. Choose 'arc2' or 'rfe2'.")
 
-    # Ajout de la pipeline lourde dans les tâches de fond
     background_tasks.add_task(
         pipeline_climonitor_complet, 
-        country, source_data, resolution, timeseries_resolution
+        country, source_data, resolution, timeseries_resolution,
+        run_spp, run_spi, run_vhi
     )
     
     return {
         "status": "processing",
-        "message": f"Le traitement pour le pays '{country}' a été démarré avec succès en arrière-plan."
+        "message": f"Processing for '{country}' has started in background.",
+        "modules_actives": {
+            "spp": run_spp,
+            "spi_hydrology": run_spi,
+            "vhi": run_vhi
+        }
     }
 
 
-
-
-
-@app.get("/download-dashboard/{country}/{source_data}", tags=["Résultats"])
+@app.get("/download-dashboard/{country}/{source_data}", tags=["Results"])
 async def get_dashboard_html(country: str, source_data: str):
-    """
-    Permet de télécharger ou de visualiser le Dashboard HTML généré pour un pays.
-    """
-    # Remplace ce chemin par l'endroit exact où build_country_dashboard enregistre le fichier HTML final
+  
     dashboard_path = Path.cwd() / "outputs" / "dashboards" / f"{country}_{source_data}_index.html"
     
     if not dashboard_path.exists():
-        raise HTTPException(status_code=404, detail="Dashboard non trouvé. Veuillez d'abord lancer les calculs via /run-monitor/.")
+        raise HTTPException(status_code=404, detail="Dashboard not found. Please, run the computation with /run-monitor/.")
         
     return FileResponse(path=dashboard_path, filename=f"{country}_dashboard.html", media_type='text/html')

@@ -3,7 +3,6 @@ import shutil
 import time
 from pathlib import Path
 
-# CORRECTION DES IMPORTS : Utilisation du nom du package global installé
 from pycmt.core.downloader import (
     download_arc2_data,
     download_gadm_country,
@@ -30,7 +29,6 @@ import ipywidgets as widgets
 import pycmt
 
 def run_uploader(allowed_extensions=".ctl, .nc, .txt, .idx", subfolder="data"):
-    """Interface de téléversement de données intégrée pour Jupyter Notebook."""
     dest_dir = Path(pycmt.__file__).resolve().parent / subfolder
     dest_dir.mkdir(parents=True, exist_ok=True)
 
@@ -62,27 +60,21 @@ def plot_precip_ts(country: str, rndta: str, rsl, ts_rsl):
     if country == "Africa":
         country_iso = "AFR"
         
-        # __file__ = src/pycmt/climonitor.py
-        # .parent correspond au dossier src/pycmt/
         package_root = Path(__file__).resolve().parent
         
-        # Cible le vrai dossier data interne : src/pycmt/data/AFR_adm
         source = package_root / "data" / "AFR_adm"
         
-        # On définit la destination directement dans les ressources du package
         destination = package_root / "data" / "gis_resources" / "countries" / "AFR_adm"
         
-        # Sécurité : on s'assure que le dossier parent existe
         destination.parent.mkdir(parents=True, exist_ok=True)
 
-        # Utilisation de dirs_exist_ok=True pour éviter de planter si le dossier de destination existe déjà
         shutil.copytree(source, destination, dirs_exist_ok=True)
-        print("✅ Dossier AFR_adm copié vers les ressources géospatiales internes.")
+        print("✅ AFR_adm folder copied!")
     else:
         country_iso = get_country_iso(country)
         print(f" country iso : {country_iso}")
         download_gadm_country(country_iso)
-        print("✅ Téléchargement du shapefile terminé !")
+        print("✅ Downloading shapefile complete!")
     
     config = {
         0.036: '0p036',
@@ -105,45 +97,45 @@ def plot_precip_ts(country: str, rndta: str, rsl, ts_rsl):
     plot_precip(rsl, config[rsl], country_iso, country, rndta)
     generate_tseries(country_iso, country, rndta)
     generate_html_map(country, rndta)
-    print(f"🎉 Génération des précipitations et séries temporelles complétée.")
+    print(f"🎉 Spatial maps and time series complete.")
     return country_iso
 
 def generate_spp(country, country_iso):
-    print(f"📥 Téléchargement RFE2 SPP...")
+    print(f"📥 Downloading RFE2 SPP...")
     download_spp_noaa("rfe2")
-    print(f"📥 Téléchargement CMORPH SPP...")
+    print(f"📥 Downloading CMORPH SPP...")
     download_spp_noaa("cmorph")
     
-    print(f"⚙️ Génération RFE2 SPP...")
+    print(f"⚙️ Generating RFE2 SPP...")
     run_orchestrator_spp(country, country_iso, "rfe2")
-    print(f"⚙️ Génération CMORPH SPP...")
+    print(f"⚙️ Generating CMORPH SPP...")
     run_orchestrator_spp(country, country_iso, "cmorph")
-    print(f"✅ SPP complété.")
+    print(f"✅ SPP complete.")
 
 def generate_spi_(country, country_iso):
-    print(f"📥 Téléchargement Données Runoff...")
+    print(f"📥 Downloading Runoff...")
     download_runoff_data()
-    print(f"📥 Téléchargement Données Soil Moisture...")
+    print(f"📥 Downloading Soil Moisture...")
     download_xsm_data()
     download_spi("cmorph")
     download_spi("rfe2")
 
-    print(f"⚙️ Génération Runoff...")
+    print(f"⚙️ Generating Runoff...")
     generate_runoff(country_iso, country)
-    print(f"⚙️ Génération Soil Moisture...")
+    print(f"⚙️ Generating Soil Moisture...")
     generate_soilmoisture(country_iso, country)
-    print(f"⚙️ Génération SPI CMORPH...")
+    print(f"⚙️ Generating SPI CMORPH...")
     calc_spi(country_iso, country, "cmorph")
-    print(f"⚙️ Génération SPI RFE2...")
+    print(f"⚙️ Generating SPI RFE2...")
     calc_spi(country_iso, country, "rfe2")
-    print(f"✅ SPI complété.")
+    print(f"✅ SPI complete.")
 
 def generated_vhi(country, country_iso):
     print(f"📥 Téléchargement VHI...")
     run_retrieval_vhi()
-    print(f"⚙️ Génération VHI...")
+    print(f"⚙️ Generating VHI...")
     do_vhi(country, country_iso)
-    print(f"✅ VHI complété.")
+    print(f"✅ VHI complete.")
 
 def generate_dashboard(country, rndta):
     build_country_dashboard(country, rndta)

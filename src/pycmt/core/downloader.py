@@ -245,10 +245,7 @@ import requests
 import pycmt
 
 def download_rfe2(days_offset=0):
-    """
-    Télécharge et synchronise les données de pluie quotidiennes RFE2 
-    et leur climatologie depuis le serveur FTP de la NOAA sur 180 jours.
-    """
+    
     # 1. Configuration des chemins absolus au sein du package
     base_dir = Path(pycmt.__file__).resolve().parent / "data"
     output_dir = base_dir / "rfe2_data" / "rfe2_daily"
@@ -440,7 +437,7 @@ def run_retrieval_vhi():
         print(f"\n--- Week {i} (Tag: {wk_tag}) ---")
         #save_path = os.path.join(TARGET_DIR, target_filename)
         save_path = TARGET_DIR / target_filename
-        print(f"{save_path}") 
+        #print(f"{save_path}") 
         # Vérification de l'existence locale
         if os.path.exists(save_path):
             print(f"File {target_filename} already downloaded.")

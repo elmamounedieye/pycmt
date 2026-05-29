@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib
-matplotlib.use('Agg') # Pour ne pas afficher de fenêtre
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.ticker import MultipleLocator
@@ -17,7 +17,6 @@ import platform
 
 
 def process_data(data):
-    """Calcule les données journalières et les cumuls."""
     s = pd.Series(data.values)
     s = s.replace(-999.0, np.nan).clip(lower=0)
     daily = s.fillna(0)
@@ -49,7 +48,7 @@ def generate_rainfall_plot(pcur_ts, pclim_ts, stnnm, lt, ln, stncnt, period, cou
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 11), sharex=True, gridspec_kw={'height_ratios': [2, 2]})
     plt.subplots_adjust(hspace=0.15) # Réduit un peu l'espace vide entre les deux
 
-    # --- Panneau Supérieur ---
+  
     ax1.fill_between(dates, r2, r4_high, where=(r2 > r4_high), interpolate=True, color='#32CD32', alpha=0.5, label='120% Of Normal')
     ax1.fill_between(dates, r2, r4_low, where=(r2 < r4_low), interpolate=True, color='#A52A2A', alpha=0.5, label='80% Of Normal')
     ax1.fill_between(dates, r4_low, r4_high, color="#8B8B95", alpha=0.3)
@@ -60,22 +59,18 @@ def generate_rainfall_plot(pcur_ts, pclim_ts, stnnm, lt, ln, stncnt, period, cou
     ax1.plot(dates, r4, color='gray', linestyle='--', linewidth=2, label='Climatological Normal')
     ax1.plot(dates, r2, color='black', linewidth=1, label=perf_txt)
     
-    # --- Panneau Inférieur ---
     ax2.bar(dates, r1, color='#4682B4', width=0.7)
 
-    # Formattage des axes
     my_fmt = mdates.DateFormatter('%d %b')
     for i, ax in enumerate([ax1, ax2]):
         ax.tick_params(labelbottom=True)
         ax.xaxis.set_major_formatter(my_fmt)
         ax.grid(True, linestyle='-', alpha=0.5)
         
-        # FIX 2 : On place les légendes au même endroit sans empiéter sur la zone de tracé
         if i == 0:
             ax.legend(loc='upper left', fontsize='small', framealpha=0.9)
         else:
-            ax.legend(loc='upper left', fontsize='small').set_visible(False) # Optionnel: cache la légende vide du bas
-
+            ax.legend(loc='upper left', fontsize='small').set_visible(False) 
         plt.setp(ax.get_xticklabels(), rotation=30, ha='right')
         ax.set_xlim(dates[0], dates[-1])
         
@@ -96,10 +91,9 @@ def generate_rainfall_plot(pcur_ts, pclim_ts, stnnm, lt, ln, stncnt, period, cou
     save_dir.mkdir(parents=True, exist_ok=True)
     filename = f"{stncnt}_{period}.png"
     
-    # FIX 3 : bbox_inches='tight' est réactivé pour nettoyer proprement les débordements de texte
+
     plt.savefig(save_dir / filename, dpi=100)#, bbox_inches='tight')
     plt.close(fig)
-    #return filename
 
 
 
@@ -112,7 +106,7 @@ def generate_tseries(country_iso, country, rndta):
     if not output_dir.exists():
         output_dir.mkdir(parents=True, exist_ok=True)
 
-    # 2. Assignation des chemins selon la source de données (ARC2 ou RFE2)
+    
     if rndta.lower() == "arc2":
         daily_precip_path = base_dir / "ARC2" / "arc2" / "arc2.ctl"
         clim_path = base_dir / "ARC2" / "arc2_clim" / "arc2_clim.ctl"
@@ -128,25 +122,20 @@ def generate_tseries(country_iso, country, rndta):
             f"Data source unknown : {rndta}. Select 'arc2' or 'rfe2'."
         )
 
-    # 3. Calcul des chemins absolus réels (Résout l'écart VS Code / Jupyter)
     abs_daily_path = daily_precip_path.resolve()
     abs_clim_path = clim_path.resolve()
 
-    # 4. Normalisation pour contrer le bug de xgrads sous Windows
     if platform.system() == "Windows":
         # Force l'usage de slashes '/' pour empêcher xgrads d'ajouter './' devant 'C:/'
         final_daily_path = abs_daily_path.as_posix()
         final_clim_path = abs_clim_path.as_posix()
     else:
-        # Format natif pour Linux et macOS (contient déjà des slashes '/')
         final_daily_path = str(abs_daily_path)
         final_clim_path = str(abs_clim_path)
 
-    # 5. Ouverture sécurisée des fichiers de données GrADS
     daily_data = open_CtlDataset(final_daily_path)
     clim_data = open_CtlDataset(final_clim_path)
 
-    # 6. Boucle de traitement par pixel et génération des graphiques
     start_time = time.time()
     pixel_args_file = base_dir / f"pixelargs_{country}.txt"
 
@@ -154,9 +143,7 @@ def generate_tseries(country_iso, country, rndta):
         for line_content in f:
             line = line_content.split()
             if not line:
-                continue  # Saute les lignes vides s'il y en a
-
-            # Extraction des paramètres du pixel
+                continue  
             stncnt, lt, ln, stnnm = (
                 line[0],
                 float(line[1]),
@@ -166,7 +153,7 @@ def generate_tseries(country_iso, country, rndta):
             periodes = [7, 10, 30, 60, 90, 180]
 
             for p in periodes:
-                # Extraction des séries temporelles (méthode du plus proche voisin)
+
                 pcur_ts = (
                     daily_data[precip_var]
                     .sel(lat=lt, lon=ln, method="nearest")
@@ -180,7 +167,6 @@ def generate_tseries(country_iso, country, rndta):
                     .load()
                 )
 
-                # Appel du module graphique pour générer le diagramme de pluviométrie
                 generate_rainfall_plot(
                     pcur_ts,
                     pclim_ts,

@@ -132,6 +132,23 @@ def plot_precip(rsl, rsl_name, country_iso, country, rndta):
         "#2984F4", "#DFDFFF", "#8272EF"
     ]
     limits_anom = [-500, -300, -200, -100, -50, -25, -10, 10, 25, 50, 100, 200, 300, 500]
+    # 1. Graduation exacte de l'image (niveaux non linéaires)
+    percent_levels = [1, 5, 25, 50, 80, 120, 150, 200, 400, 600]
+
+    # 2. Codes HEX précis extraits directement de l'image
+    percent_colors = [
+        "#E1BEB4",  # 0 à 1    : Rose / Beige clair
+        "#C00000",  # 1 à 5    : Rouge vif
+        "#FF3200",  # 5 à 25   : Orange rouge
+        "#FFA000",  # 25 à 50  : Orange classique
+        "#FFE878",  # 50 à 80  : Jaune pastel
+        "#FFFFFF",  # 80 à 120 : Blanc (Neutre)
+        "#C8FFBE",  # 120 à 150: Vert très clair
+        "#78F573",  # 150 à 200: Vert pomme
+        "#1EB41E",  # 200 à 400: Vert franc
+        "#96D2FA",  # 400 à 600: Bleu ciel
+        "#2882F0",  # 600 à 1000: Bleu foncé / Roi
+    ]
 
     mask_sorted = mask_nc['mask_data']
 
@@ -145,7 +162,7 @@ def plot_precip(rsl, rsl_name, country_iso, country, rndta):
     # 4. LOOP PERIODS
     # =========================================================
     for p in periodes:
-        print(f"\n🕒 Période : {p} jours")
+        print(f"\n Period : {p} days")
 
         daily_slice = daily_data[precip_var].isel(time=slice(-p, None))
         clim_slice = clim_data[precip_var].isel(time=slice(-p, None))
@@ -186,14 +203,14 @@ def plot_precip(rsl, rsl_name, country_iso, country, rndta):
             "precip_anomaly": {"data": anom_masked, "levels": limits_anom, "colors": anom_colors, "title": "Anomaly", "unit": "mm"},
             "total_precip": {"data": pcur_masked, "levels": limits_precip, "colors": colors_precip, "title": "Current Precip", "unit": "mm"},
             "normal_precip": {"data": pclim_masked, "levels": limits_precip, "colors": colors_precip, "title": "Climatology", "unit": "mm"},
-            "percent_normal_precip": {"data": pcnp_masked, "levels": limits_precip, "colors": colors_precip, "title": "Percent of Normal", "unit": "%"}
+            "percent_normal_precip": {"data": pcnp_masked, "levels": percent_levels, "colors": percent_colors, "title": "Percent of Normal", "unit": "%"}
         }
 
         # =========================================================
         # 5. DESSIN MULTI-COUCHES PERFORMANCE
         # =========================================================
         for key, config in plot_configs.items():
-            print(f"🎨 {config['title']}")
+            print(f"{config['title']}")
 
             fig, ax = plt.subplots(figsize=(12, 9.27), subplot_kw={'projection': ccrs.PlateCarree()})
 
@@ -262,6 +279,6 @@ def plot_precip(rsl, rsl_name, country_iso, country, rndta):
             plt.clf()
             plt.close(fig)
 
-            print("✅ saved")
+            print("✅ Saved")
             
-    print(f"✅ Cartes de précipitations {rndta} terminées avec double masque couleur.")
+    print(f"✅{rndta} Precipitation maps generated.")

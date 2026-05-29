@@ -18,6 +18,7 @@ dependencies = [
     "dask",
     "geopandas",
     "ipywidgets",
+    "widgetsnbextension",
     "Jinja2",
     "matplotlib",
     "netCDF4",
@@ -34,8 +35,9 @@ dependencies = [
     "rioxarray",
     "scipy",
     "shapely",
+    "uvicorn",
     "xarray",
-    "xgrads"
+    "xgrads",
 ]
 
 #[project.scripts]

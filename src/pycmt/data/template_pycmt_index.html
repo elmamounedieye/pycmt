@@ -110,8 +110,10 @@
             width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; cursor: zoom-in; 
             transition: all 0.2s ease; background: #fff;
         }
-        .zoomable:hover { transform: scale(1.03); border-color: var(--accent-color); }
-
+        .zoomable:not(.is-zoomed):hover { 
+                    transform: scale(1.03); 
+                    border-color: var(--accent-color); 
+                }
         /* Miniatures HTML (Time Series) */
         .thumb-iframe {
             width: 150px; height: 100px; border: 1px solid #e2e8f0; border-radius: 6px;
@@ -126,10 +128,17 @@
 
         /* Zoom Plein Écran */
         .is-zoomed { 
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) !important;
-            width: auto !important; height: 90vh !important; z-index: 9999;
-            box-shadow: 0 0 100px rgba(0,0,0,0.8); cursor: zoom-out;
-            border: 5px solid white; border-radius: 4px;
+            position: fixed; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%) !important; /* Reste parfaitement fixé au centre */
+            width: auto !important; 
+            height: 90vh !important; 
+            z-index: 9999;
+            box-shadow: 0 0 100px rgba(0,0,0,0.8); 
+            cursor: zoom-out; /* Curseur adapté pour dézoomer */
+            border: 5px solid white; 
+            border-radius: 4px;
         }
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9998; }
     </style>
