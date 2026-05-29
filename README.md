@@ -1,4 +1,4 @@
-# pycmt
+# pyCMT
 
 This is the python version of climate monitor tools (CMT)
 
