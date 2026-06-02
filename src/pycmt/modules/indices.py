@@ -15,6 +15,7 @@ from scipy.ndimage import gaussian_filter
 from datetime import datetime, timedelta
 import shutil
 import re
+from cartopy.mpl.gridliner import LATITUDE_FORMATTER, LONGITUDE_FORMATTER
 
 
 
@@ -175,51 +176,102 @@ def prepare_vhi_data(path_vhi, path_mask):
     return vhi.where(mask_interp == 1) #&(land_interp ==1))
 
 
+
+import os
+import cartopy.crs as ccrs
+import geopandas as gpd
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+from cartopy.mpl.gridliner import LATITUDE_FORMATTER, LONGITUDE_FORMATTER
+
+
 def plot_vhi_map(da, extent_info, path_shp, wk_info, output_dir, country):
-    """Génère et sauvegarde la carte Cartopy."""
-    print(f"Starting Generating VHI maps")
+    print(f"Starting VHI map generation")
     cmap, norm, levels = get_vhi_colormap()
-    
+
     fig = plt.figure(figsize=(11, 8.5))
     ax = plt.axes(projection=ccrs.PlateCarree())
-    
+
     da = da.where(da > 0)
     im = ax.pcolormesh(
         da.lon,
-        da.lat, 
-        da, 
-        #levels=levels,
-        cmap=cmap, 
+        da.lat,
+        da,
+        cmap=cmap,
         norm=norm,
         transform=ccrs.PlateCarree(),
-        zorder=1)
-    
+        zorder=1,
+    )
+
     if os.path.exists(path_shp):
         gdf = gpd.read_file(path_shp)
-        gdf.plot(ax=ax, edgecolor='black', facecolor='none', linewidth=0.5, zorder=2)
+        gdf.plot(
+            ax=ax,
+            edgecolor="black",
+            facecolor="none",
+            linewidth=0.5,
+            zorder=2,
+        )
     else:
-        print(f"Attention: {path_shp} introuvable. Utilisation des frontières par défaut.")
-        #ax.add_feature(cfeature.BORDERS, linewidth=0.5, edgecolor='black')
+        print(
+            f"Warning: {path_shp} not found. Using default map boundaries."
+        )
 
-    # Configuration géographique
-    ax.set_extent([extent_info['lon_range'][0], extent_info['lon_range'][1], 
-                   extent_info['lat_range'][0], extent_info['lat_range'][1]],
-                  crs=ccrs.PlateCarree()) # Best practice to specify CRS for extent
-                  
-    date_val = wk_info['end_str']
-    plt.title(f"Vegetation Health Index - {extent_info['name']}",loc='left', fontsize=9, fontweight='bold', pad=7)
-    plt.title(f"Week Ending {date_val}", loc='right', fontsize=9, style='italic')
+    lon_min, lon_max = extent_info["lon_range"][0], extent_info["lon_range"][1]
+    lat_min, lat_max = extent_info["lat_range"][0], extent_info["lat_range"][1]
 
-    cbar = fig.colorbar(im, ax=ax, orientation='horizontal', fraction=0.04, pad=0.08, extend='both')
-    cbar.set_label('VHI (%)', fontsize=10)
+    ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=ccrs.PlateCarree())
+
+    lon_delta = lon_max - lon_min
+    if lon_delta <= 5:
+        step = 1.0
+    elif lon_delta <= 15:
+        step = 3.0
+    elif lon_delta <= 30:
+        step = 5.0
+    else:
+        step = 10.0
+
+    gl = ax.gridlines(
+        crs=ccrs.PlateCarree(),
+        draw_labels=True,
+        linewidth=0.5,
+        color="gray",
+        alpha=0.5,
+        linestyle="--",
+    )
+    gl.top_labels = False
+    gl.right_labels = False
+    gl.xformatter = LONGITUDE_FORMATTER
+    gl.yformatter = LATITUDE_FORMATTER
+
+    gl.xlocator = mticker.MultipleLocator(step)
+    gl.ylocator = mticker.MultipleLocator(step)
+
+    gl.xlabel_style = {"size": 9}
+    gl.ylabel_style = {"size": 9}
+
+    date_val = wk_info["end_str"]
+    plt.title(
+        f"Vegetation Health Index - {extent_info['name']}",
+        loc="left",
+        fontsize=9,
+        fontweight="bold",
+        pad=7,
+    )
+    plt.title(
+        f"Week Ending {date_val}", loc="right", fontsize=9, style="italic"
+    )
+
+    cbar = fig.colorbar(
+        im, ax=ax, orientation="horizontal", fraction=0.04, pad=0.08, extend="both"
+    )
+    cbar.set_label("VHI (%)", fontsize=10)
     cbar.ax.set_xticklabels([str(l) for l in levels])
-    output_path= output_dir / f"{country}_vhi{wk_info['week_str']}.png"
+    output_path = output_dir / f"{country}_vhi{wk_info['week_str']}.png"
 
-    plt.savefig(output_path, dpi=150, bbox_inches='tight')
+    plt.savefig(output_path, dpi=150, bbox_inches="tight")
     plt.close(fig)
-    #print(f"Fichier créé : {output_path}")
-    #print(f"Ending Generating VHI maps")
-
 
 def do_vhi(country, country_iso):
  

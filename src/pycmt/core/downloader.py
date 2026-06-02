@@ -112,7 +112,7 @@ def rename_country_shapefiles(country_iso):
 
 
 
-def download_arc2_data(init_day_offset=0):
+def download_arc2_data(init_day_offset=1):
     # 1. Configuration des chemins
     base_dir = Path(__file__).resolve().parents[1]
     daily_dir = Path(__file__).resolve().parents[1] / "data" / "ARC2" / "arc2"
@@ -244,7 +244,7 @@ import requests
 # Point d'ancrage absolu du package installé
 import pycmt
 
-def download_rfe2(days_offset=0):
+def download_rfe2(days_offset=1):
     
     # 1. Configuration des chemins absolus au sein du package
     base_dir = Path(pycmt.__file__).resolve().parent / "data"
@@ -396,65 +396,63 @@ def download_rfe2(days_offset=0):
 
 # Liste des URL modèles (le tag {wk} sera remplacé par l'année + semaine)
 
+
+
 def download_file(url, filename):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    }
     try:
-        #print(f"Downloading attempt : {url}")
-        # Note: Pour le FTP pur, urllib est préférable, mais requests gère très bien le HTTPS
-        response = requests.get(url, stream=True, timeout=30)
+        response = requests.get(url, headers=headers, stream=True, timeout=30)
         if response.status_code == 200:
-            with open(filename, 'wb') as f:
+            with open(filename, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
             print(f"Succeeded : {filename} downloading.")
             return True
+        else:
+            print(f"URL HTTP Error : {response.status_code} for {url}")
+            return False
     except Exception as e:
         print(f"URL failure : {e}")
         return False
 
+
 def run_retrieval_vhi():
-    # Nettoyage des PNG (comme dans le script shell)
-    INIT_DAY = 0  # Équivalent à $1
+    INIT_DAY = 0
     TARGET_DIR = Path(__file__).resolve().parents[1] / "data" / "vhi" / "data"
     TARGET_DIR.mkdir(parents=True, exist_ok=True)
     WEEKS_TO_FETCH = 6
     for f in os.listdir(TARGET_DIR):
         if f.endswith(".png"):
-            os.remove(f)
+            os.remove(TARGET_DIR / f)
 
     for i in range(1, WEEKS_TO_FETCH + 1):
-        # Calcul de la date cible
         nd = INIT_DAY + (i * 7)
         target_date = datetime.now() - timedelta(days=nd)
-        
-        # Calcul de l'année et de la semaine (Logique GrADS: tranches de 7 jours)
+
         year = target_date.year
         julian_day = int(target_date.strftime("%j"))
         week_num = min(((julian_day - 1) // 7) + 1, 52)
-        
-        wk_tag = f"{year}0{week_num:02d}"
+
+        wk_tag = f"{year}{week_num:03d}"
         target_filename = f"VHP.G04.C07.j01.P{wk_tag}.VH.nc"
 
         print(f"\n--- Week {i} (Tag: {wk_tag}) ---")
-        #save_path = os.path.join(TARGET_DIR, target_filename)
         save_path = TARGET_DIR / target_filename
-        #print(f"{save_path}") 
-        # Vérification de l'existence locale
+
         if os.path.exists(save_path):
             print(f"File {target_filename} already downloaded.")
             continue
-        
+
         URL_SOURCES = [
-                "ftp://ftp.star.nesdis.noaa.gov/pub/corp/scsb/wguo/data/Blended_VH_4km/VH/VHP.G04.C07.npp.P{wk}.VH.nc",
-                "ftp://ftp.star.nesdis.noaa.gov/pub/corp/scsb/wguo/data/VHP_4km/VH/VHP.G04.C07.NP.P{wk}.VH.nc",
-                "https://www.star.nesdis.noaa.gov/pub/corp/scsb/wguo/data/Blended_VH_4km/VH/VHP.G04.C07.j01.P{wk}.VH.nc",
-                "https://www.star.nesdis.noaa.gov/data/pub0018/VHPdata4users/data/Blended_VH_4km/VH/VHP.G04.C07.j01.P{wk}.VH.nc"
-            ]
-        # Tentative de téléchargement via les différentes sources
+            "https://www.star.nesdis.noaa.gov/data/pub0018/VHPdata4users/data/Blended_VH_4km/VH/VHP.G04.C07.j01.P{wk}.VH.nc"
+        ]
         for url_template in URL_SOURCES:
             source_url = url_template.format(wk=wk_tag)
             if download_file(source_url, save_path):
-                break # On s'arrête si un téléchargement réussit
-
+                break
 
 ####### Download SPP #######
 import os
