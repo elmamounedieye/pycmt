@@ -22,7 +22,7 @@ from rasterio.transform import from_origin
 import pycmt
 
 # =========================================================================
-# SYSTEM-LEVEL NETWORK OPTIMIZATION FOR MACOS
+# SYSTEM-LEVEL NETWORK OPTIMIZATION FOR MACOS (MAX VELOCITY)
 # =========================================================================
 
 def allowed_gai_family():
@@ -34,13 +34,18 @@ urllib3_cn.allowed_gai_family = allowed_gai_family
 
 # Configuration de la session avec pool de connexions élargi pour le multi-threading
 http_session = requests.Session()
-adapter = HTTPAdapter(pool_connections=25, pool_maxsize=25, max_retries=3)
+adapter = HTTPAdapter(
+    pool_connections=50,       # Augmenté pour éviter l'attente de socket sur Mac
+    pool_maxsize=50,           # Augmenté pour paralléliser au maximum
+    max_retries=3
+)
 http_session.mount("https://", adapter)
 http_session.mount("http://", adapter)
 
 http_session.headers.update({
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Connection": "keep-alive" # Force la connexion à rester ouverte
 })
 
 class DESAdapter(HTTPAdapter):
@@ -54,21 +59,21 @@ class DESAdapter(HTTPAdapter):
 http_session.mount('https://sgbd.acmad.org', DESAdapter())
 
 # =========================================================================
-# ASYNC-BUFFERED CORE DOWNLOADING FUNCTIONS
+# RAM-BUFFERED CORE DOWNLOADING FUNCTIONS (BYPASSES MAC DISK LAG)
 # =========================================================================
 
 def download_file(url, filename):
-    """Downloads files with an expanded 128KB block buffer."""
+    """Downloads files instantly by pulling full data into RAM before writing to Mac storage."""
     try:
-        response = http_session.get(url, stream=True, timeout=30)
+        response = http_session.get(url, timeout=30)
         if response.status_code == 200:
+            # Télécharge directement l'intégralité du fichier en mémoire RAM d'un coup (Évite le throttling Mac)
+            data = response.content
             with open(filename, "wb") as f:
-                for chunk in response.iter_content(chunk_size=131072):
-                    f.write(chunk)
+                f.write(data)
             print(f"Succeeded : {Path(filename).name} downloading.")
             return True
-        else:
-            return False
+        return False
     except Exception as e:
         print(f"URL failure : {e}")
         return False
@@ -79,19 +84,20 @@ def manage_download(url, dest_path, is_gzip=False, min_size_kb=2000):
         return True 
 
     try:
-        response = http_session.get(url, stream=True, timeout=15)
+        response = http_session.get(url, timeout=20)
         response.raise_for_status()
         
+        # Récupération immédiate du bloc binaire complet en RAM
+        raw_data = response.content
+        
         if is_gzip:
-            # Téléchargement complet en RAM puis décompression vectorielle (évite les verrous disques macOS)
-            compressed_data = response.content
-            decompressed_data = gzip.decompress(compressed_data)
+            # Décompression vectorielle ultra-rapide en mémoire vive
+            decompressed_data = gzip.decompress(raw_data)
             with open(dest_path, 'wb') as f_out:
                 f_out.write(decompressed_data)
         else:
             with open(dest_path, 'wb') as f_out:
-                for chunk in response.iter_content(chunk_size=131072):
-                    f_out.write(chunk)
+                f_out.write(raw_data)
         return True
     except Exception as e:
         if dest_path.exists():
@@ -168,7 +174,7 @@ def generate_ctl(template_name, output_path, replacements):
     output_path.write_text(content)
 
 # =========================================================================
-# PARALLELIZED FAST WORKFLOW PIPELINES
+# PARALLELIZED FAST WORKFLOW PIPELINES (MAX THREADS FOR MAC ECOSYSTEM)
 # =========================================================================
 
 def download_arc2_data(init_day_offset=1):
@@ -200,10 +206,10 @@ def download_arc2_data(init_day_offset=1):
         m_nd = t_date.strftime("%m%d")
         
         tasks.append((f"https://ftp.cpc.ncep.noaa.gov/fews/fewsdata/africa/arc2/bin/daily_clim.bin.{d_str}.gz", daily_dir / f"daily_clim.bin.{d_str}", True))
-        tasks.append((f"https://ftp.cpc.ncep.noaa.gov/fews/fewsdata/africa/arc2/bin/daily_clim.bin.{d_str}.gz", daily_dir / f"daily_clim.bin.{d_str}", True))
         tasks.append((f"https://ftp.cpc.ncep.noaa.gov/fews/AFR_CLIM/ARC2/CLIMATOLOGY_DATA/DAILY_MEANS/clim.bin.{m_nd}", clim_dir / f"clim.bin.{m_nd}", False))
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    # Augmentation des Workers simultanés à 16 pour saturer le lien réseau
+    with ThreadPoolExecutor(max_workers=16) as executor:
         executor.map(lambda p: manage_download(p[0], p[1], p[2]), tasks)
 
     start_date_str = (today - timedelta(days=180)).strftime("%d%b%Y")
@@ -237,7 +243,7 @@ def download_rfe2(days_offset=1):
     if n_missing <= 0 and (output_dir / "rfe2daily.ctl").exists():
         return
         
-    print(f"🚀 Mac Parallel Engine: Downloading RFE2 payloads in parallel (8 threads)...")
+    print(f"🚀 Mac Parallel Engine: Downloading RFE2 payloads in parallel (16 threads)...")
     tasks = []
     for i in range(1, 181):
         target_date = datetime.now() - timedelta(days=(days_offset + i))
@@ -247,7 +253,7 @@ def download_rfe2(days_offset=1):
         tasks.append((f"https://ftp.cpc.ncep.noaa.gov/fews/fewsdata/africa/rfe2/bin/all_products.bin.{date_str}.gz", output_dir / f"all_products.bin.{date_str}", True))
         tasks.append((f"https://ftp.cpc.ncep.noaa.gov/fews/clim_dly/clim_RFE2/clim_dly.{mmdd}", clim_dir / f"clim_dly.{mmdd}", False))
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=16) as executor:
         executor.map(lambda p: manage_download(p[0], p[1], p[2]), tasks)
 
     start_date = datetime.now() - timedelta(days=(days_offset + 180))
@@ -281,7 +287,7 @@ def run_retrieval_vhi():
 
     if tasks:
         print(f"🚀 Mac Parallel Engine: Fetching VHI time series (Parallel)...")
-        with ThreadPoolExecutor(max_workers=3) as executor:
+        with ThreadPoolExecutor(max_workers=4) as executor:
             executor.map(lambda p: download_file(p[0], p[1]), tasks)
 
 def download_spp_noaa(rndta):
@@ -304,7 +310,7 @@ def download_spp_noaa(rndta):
     target_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"🚀 Mac Parallel Engine: Syncing SPP {rndta.upper()} fields...")
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_workers=6) as executor:
         executor.map(lambda url: download_file(url, target_dir / url.split('/')[-1]), base_urls)
 
     for ctl_file in target_dir.glob("*.ctl"):
@@ -313,7 +319,6 @@ def download_spp_noaa(rndta):
             ctl_file.write_text(content.replace("DSET ", "DSET ^"))
 
 def download_spi(rndta: str):
-    # Les dictionnaires d'URLs restent identiques...
     spi_data_urls = {
         "cmorph": [f"https://ftp.cpc.ncep.noaa.gov/fews/DroughtMonitor/spi/cmorph/{f}" for f in ["drymask12.bin","drymask12.ctl","drymask1.bin","drymask1.ctl","drymask24.bin","drymask24.ctl","drymask3.bin","drymask3.ctl","drymask6.bin","drymask6.ctl","globalmask0.25.dat","landmask.ctl","cmorph.spi.12.mo.bin","cmorph.spi.12.mo.ctl","cmorph.spi.1.mo.bin","cmorph.spi.1.mo.ctl","cmorph.spi.24.mo.bin","cmorph.spi.24.mo.ctl","cmorph.spi.3.mo.bin","cmorph.spi.3.mo.ctl","cmorph.spi.6.mo.bin","cmorph.spi.6.mo.ctl"]],
         "rfe2": [f"https://ftp.cpc.ncep.noaa.gov/fews/DroughtMonitor/spi/rfe2/{f}" for f in ["drymask12.bin","drymask12.ctl","drymask1.bin","drymask1.ctl","drymask24.bin","drymask24.ctl","drymask3.bin","drymask3.ctl","drymask6.bin","drymask6.ctl","mask.ctl","mask.gra","rfe2.spi.12.mo.bin","rfe2.spi.12.mo.ctl","rfe2.spi.1.mo.bin","rfe2.spi.1.mo.ctl","rfe2.spi.24.mo.bin","rfe2.spi.24.mo.ctl","rfe2.spi.3.mo.bin","rfe2.spi.3.mo.ctl","rfe2.spi.6.mo.bin","rfe2.spi.6.mo.ctl"]]
@@ -323,7 +328,7 @@ def download_spi(rndta: str):
     base_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"🚀 Mac Parallel Engine: Downloading SPI {rndta.upper()} fields...")
-    with ThreadPoolExecutor(max_workers=6) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         executor.map(lambda url: download_file(url, base_dir / url.split('/')[-1]), spi_data_urls[rndta])
 
 def download_runoff_data():
@@ -332,7 +337,7 @@ def download_runoff_data():
     urls = [f"https://ftp.cpc.ncep.noaa.gov/fews/DroughtMonitor/Runoff/{f}" for f in ["drymask12.bin","drymask12.ctl","drymask1.bin","drymask1.ctl","drymask24.bin","drymask24.ctl","drymask3.bin","drymask3.ctl","drymask6.bin","drymask6.ctl","globalmask0.5.dat","landmask.ctl","runoff.12.mo.bin","runoff.12.mo.ctl","runoff.1.mo.bin","runoff.1.mo.ctl","runoff.24.mo.bin","runoff.24.mo.ctl","runoff.3.mo.bin","runoff.3.mo.ctl","runoff.6.mo.bin","runoff.6.mo.ctl"]]
     
     print(f"🚀 Mac Parallel Engine: Downloading Hydrology Runoff fields...")
-    with ThreadPoolExecutor(max_workers=6) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         executor.map(lambda url: download_file(url, base_dir / url.split('/')[-1]), urls)
 
 def download_xsm_data():
@@ -341,5 +346,5 @@ def download_xsm_data():
     urls = [f"https://ftp.cpc.ncep.noaa.gov/fews/DroughtMonitor/SoilMoisture/{f}" for f in ["drymask12.bin","drymask12.ctl","drymask1.bin","drymask1.ctl","drymask24.bin","drymask24.ctl","drymask3.bin","drymask3.ctl","drymask6.bin","drymask6.ctl","globalmask0.5.dat","landmask.ctl","soilmoisture.12.mo.bin","soilmoisture.12.mo.ctl","soilmoisture.1.mo.bin","soilmoisture.1.mo.ctl","soilmoisture.24.mo.bin","soilmoisture.24.mo.ctl","soilmoisture.3.mo.bin","soilmoisture.3.mo.ctl","soilmoisture.6.mo.bin","soilmoisture.6.mo.ctl"]]
     
     print(f"🚀 Mac Parallel Engine: Downloading Soil Moisture fields...")
-    with ThreadPoolExecutor(max_workers=6) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         executor.map(lambda url: download_file(url, base_dir / url.split('/')[-1]), urls)
