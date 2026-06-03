@@ -75,7 +75,7 @@ class Maskgenerator:
 
         #Adding coordinates system (CRS)
         ds.rio.write_crs("epsg:4326", inplace = True)
-        ds.to_netcdf(output_path)
+        ds.to_netcdf(output_path, mode="w")
         #print(f"=================output_path===============")
         #print(f"{output_path}")
         return output_path
