@@ -67,7 +67,6 @@ def download_file(url, filename):
     try:
         response = http_session.get(url, timeout=30)
         if response.status_code == 200:
-            # Télécharge directement l'intégralité du fichier en mémoire RAM d'un coup (Évite le throttling Mac)
             data = response.content
             with open(filename, "wb") as f:
                 f.write(data)
@@ -198,7 +197,7 @@ def download_arc2_data(init_day_offset=1):
             break
         today -= timedelta(days=1)
             
-    print(f"🚀 Mac Parallel Engine: Launching multi-threaded download for ARC2...")
+    print(f" Launching multi-threaded download for ARC2...")
     tasks = []
     for i in range(1, 181):
         t_date = today - timedelta(days=i)
@@ -243,7 +242,7 @@ def download_rfe2(days_offset=1):
     if n_missing <= 0 and (output_dir / "rfe2daily.ctl").exists():
         return
         
-    print(f"🚀 Mac Parallel Engine: Downloading RFE2 payloads in parallel (16 threads)...")
+    print(f"Downloading RFE2 payloads in parallel (16 threads)...")
     tasks = []
     for i in range(1, 181):
         target_date = datetime.now() - timedelta(days=(days_offset + i))
@@ -286,7 +285,7 @@ def run_retrieval_vhi():
             tasks.append((url, save_path))
 
     if tasks:
-        print(f"🚀 Mac Parallel Engine: Fetching VHI time series (Parallel)...")
+        print(f"complete Fetching VHI time series (Parallel)...")
         with ThreadPoolExecutor(max_workers=4) as executor:
             executor.map(lambda p: download_file(p[0], p[1]), tasks)
 
@@ -309,7 +308,7 @@ def download_spp_noaa(rndta):
     target_dir = Path(__file__).resolve().parents[1] / "data" / "spp" / f"spp_data_{rndta}"
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"🚀 Mac Parallel Engine: Syncing SPP {rndta.upper()} fields...")
+    print(f"complete Syncing SPP {rndta.upper()} fields...")
     with ThreadPoolExecutor(max_workers=6) as executor:
         executor.map(lambda url: download_file(url, target_dir / url.split('/')[-1]), base_urls)
 
@@ -327,7 +326,7 @@ def download_spi(rndta: str):
     base_dir = Path(__file__).resolve().parents[1] / "data" / "spi" / "data" / f"{rndta}"
     base_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"🚀 Mac Parallel Engine: Downloading SPI {rndta.upper()} fields...")
+    print(f"complete Downloading SPI {rndta.upper()} fields...")
     with ThreadPoolExecutor(max_workers=8) as executor:
         executor.map(lambda url: download_file(url, base_dir / url.split('/')[-1]), spi_data_urls[rndta])
 
@@ -336,7 +335,7 @@ def download_runoff_data():
     base_dir.mkdir(parents=True, exist_ok=True)
     urls = [f"https://ftp.cpc.ncep.noaa.gov/fews/DroughtMonitor/Runoff/{f}" for f in ["drymask12.bin","drymask12.ctl","drymask1.bin","drymask1.ctl","drymask24.bin","drymask24.ctl","drymask3.bin","drymask3.ctl","drymask6.bin","drymask6.ctl","globalmask0.5.dat","landmask.ctl","runoff.12.mo.bin","runoff.12.mo.ctl","runoff.1.mo.bin","runoff.1.mo.ctl","runoff.24.mo.bin","runoff.24.mo.ctl","runoff.3.mo.bin","runoff.3.mo.ctl","runoff.6.mo.bin","runoff.6.mo.ctl"]]
     
-    print(f"🚀 Mac Parallel Engine: Downloading Hydrology Runoff fields...")
+    print(f"complete Downloading Hydrology Runoff fields...")
     with ThreadPoolExecutor(max_workers=8) as executor:
         executor.map(lambda url: download_file(url, base_dir / url.split('/')[-1]), urls)
 
@@ -345,6 +344,6 @@ def download_xsm_data():
     base_dir.mkdir(parents=True, exist_ok=True)
     urls = [f"https://ftp.cpc.ncep.noaa.gov/fews/DroughtMonitor/SoilMoisture/{f}" for f in ["drymask12.bin","drymask12.ctl","drymask1.bin","drymask1.ctl","drymask24.bin","drymask24.ctl","drymask3.bin","drymask3.ctl","drymask6.bin","drymask6.ctl","globalmask0.5.dat","landmask.ctl","soilmoisture.12.mo.bin","soilmoisture.12.mo.ctl","soilmoisture.1.mo.bin","soilmoisture.1.mo.ctl","soilmoisture.24.mo.bin","soilmoisture.24.mo.ctl","soilmoisture.3.mo.bin","soilmoisture.3.mo.ctl","soilmoisture.6.mo.bin","soilmoisture.6.mo.ctl"]]
     
-    print(f"🚀 Mac Parallel Engine: Downloading Soil Moisture fields...")
+    print(f"Downloading Soil Moisture fields...")
     with ThreadPoolExecutor(max_workers=8) as executor:
         executor.map(lambda url: download_file(url, base_dir / url.split('/')[-1]), urls)
