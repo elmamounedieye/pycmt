@@ -66,6 +66,10 @@ def plot_precip(rsl, rsl_name, country_iso, country, rndta):
         daily_precip_path = (base_dir / "rfe2_data" / "rfe2_daily" / "rfe2daily.ctl")#.resolve()
         clim_path = (base_dir / "rfe2_data" / "rfe2_clim" / "rfe2clim.ctl")#.resolve()
         precip_var = "r"
+    elif rndta.lower() == "cmorph": 
+        daily_precip_path = (base_dir / "CMORPH" / "cmorph_daily" / "cmorph.ctl")#.resolve()
+        clim_path = (base_dir / "CMORPH" / "cmorph_clim" / "cmorphclim.ctl")#.resolve()
+        precip_var = "r"
     shap_path = base_dir / "gis_resources" / "countries" / f"{country_iso}_adm" / f"{country_iso}_adm1.shp"
 
     # =========================================================

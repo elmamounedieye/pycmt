@@ -77,7 +77,7 @@ def download_file(url, filename):
         print(f"URL failure : {e}")
         return False
 
-def manage_download(url, dest_path, is_gzip=False, min_size_kb=2000):
+def manage_download(url, dest_path, is_gzip=False, min_size_kb=1000):
     """High-speed download utilizing memory buffers before hitting Mac disk storage."""
     if dest_path.exists() and (dest_path.stat().st_size / 1024) > min_size_kb:
         return True 
@@ -189,11 +189,17 @@ def download_arc2_data(init_day_offset=1):
     while True:
         target_date = today - timedelta(days=1)
         date_str = target_date.strftime("%Y%m%d")
+        date_clim_str = target_date.strftime("%m%d")
         daily_filename = f"daily_clim.bin.{date_str}"
+        clim_filename = f"clim.bin.{date_clim_str}"
         daily_path = daily_dir / daily_filename
+        clim_path = clim_dir / clim_filename
         daily_url = f"https://ftp.cpc.ncep.noaa.gov/fews/fewsdata/africa/arc2/bin/{daily_filename}.gz"
+        clim_url = f"https://ftp.cpc.ncep.noaa.gov/fews/AFR_CLIM/ARC2/CLIMATOLOGY_DATA/DAILY_MEANS/{clim_filename}"
         
         if manage_download(daily_url, daily_path, is_gzip=True):
+            break
+        if manage_download(clim_url, clim_path):
             break
         today -= timedelta(days=1)
             
@@ -208,7 +214,7 @@ def download_arc2_data(init_day_offset=1):
         tasks.append((f"https://ftp.cpc.ncep.noaa.gov/fews/AFR_CLIM/ARC2/CLIMATOLOGY_DATA/DAILY_MEANS/clim.bin.{m_nd}", clim_dir / f"clim.bin.{m_nd}", False))
 
     # Augmentation des Workers simultanés à 16 pour saturer le lien réseau
-    with ThreadPoolExecutor(max_workers=16) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         executor.map(lambda p: manage_download(p[0], p[1], p[2]), tasks)
 
     start_date_str = (today - timedelta(days=180)).strftime("%d%b%Y")
@@ -242,7 +248,7 @@ def download_rfe2(days_offset=1):
     if n_missing <= 0 and (output_dir / "rfe2daily.ctl").exists():
         return
         
-    print(f"Downloading RFE2 payloads in parallel (16 threads)...")
+    print(f"Downloading RFE2 payloads in parallel (8 threads)...")
     tasks = []
     for i in range(1, 181):
         target_date = datetime.now() - timedelta(days=(days_offset + i))
@@ -252,7 +258,7 @@ def download_rfe2(days_offset=1):
         tasks.append((f"https://ftp.cpc.ncep.noaa.gov/fews/fewsdata/africa/rfe2/bin/all_products.bin.{date_str}.gz", output_dir / f"all_products.bin.{date_str}", True))
         tasks.append((f"https://ftp.cpc.ncep.noaa.gov/fews/clim_dly/clim_RFE2/clim_dly.{mmdd}", clim_dir / f"clim_dly.{mmdd}", False))
 
-    with ThreadPoolExecutor(max_workers=16) as executor:
+    with ThreadPoolExecutor(max_workers=8) as executor:
         executor.map(lambda p: manage_download(p[0], p[1], p[2]), tasks)
 
     start_date = datetime.now() - timedelta(days=(days_offset + 180))
@@ -260,6 +266,92 @@ def download_rfe2(days_offset=1):
     generate_ctl(base_dir / "template_rfe2.ctl", output_dir / "rfe2daily.ctl", {"DLDATADIR": "^", "NNDAYS": 180, "STDATE": start_date_str})
     generate_ctl(base_dir / "rfe2clim.ctl", clim_dir / "rfe2clim.ctl", {"NNDAYS": 180, "STDATE": start_date_str})
     print(f"✅ RFE2 Synchronization Complete.")
+
+#download CMORPH DATA
+def download_cmorph_data(init_day_offset=0):
+    base_dir = Path(__file__).resolve().parents[1]
+    daily_dir = base_dir / "data" / "CMORPH" / "cmorph_daily"
+    clim_dir = base_dir / "data" / "CMORPH" / "cmorph_clim"
+
+    daily_dir.mkdir(parents=True, exist_ok=True)
+    clim_dir.mkdir(parents=True, exist_ok=True)
+
+    today = datetime.now() - timedelta(days=init_day_offset)
+
+    # 1. Recherche dynamique du dernier fichier disponible sur le serveur
+    while True:
+        target_date = today - timedelta(days=1)
+        date_str = target_date.strftime("%Y%m%d")
+        daily_filename = f"CMORPH_V1.0_ADJ_0.25deg-DLY_00Z_{date_str}"
+        daily_path = daily_dir / daily_filename
+        daily_url = f"https://ftp.cpc.ncep.noaa.gov/precip/CMORPH1_BC_00Z/bin/{daily_filename}"
+
+        if manage_download(daily_url, daily_path, is_gzip=False):
+            break
+        today -= timedelta(days=1)
+
+    print(f"Launching multi-threaded download for CMORPH (180 days)...")
+    tasks = []
+
+    # 2. Préparation des tâches pour les 180 jours précédents
+    for i in range(1, 181):
+        t_date = today - timedelta(days=i)
+        d_str = t_date.strftime("%Y%m%d")
+        m_nd = t_date.strftime("%m%d")
+
+        daily_file = daily_dir / f"CMORPH_V1.0_ADJ_0.25deg-DLY_00Z_{d_str}"
+        clim_file = clim_dir / f"clim_dly.{m_nd}"
+
+        # Ajout du fichier quotidien s'il est manquant
+        if not daily_file.exists() or daily_file.stat().st_size < 2000:
+            tasks.append(
+                (
+                    f"https://ftp.cpc.ncep.noaa.gov/precip/CMORPH1_BC_00Z/bin/CMORPH_V1.0_ADJ_0.25deg-DLY_00Z_{d_str}",
+                    daily_file,
+                    False,
+                )
+            )
+
+        # Ajout du fichier climatologique s'il est manquant
+        if not clim_file.exists() or clim_file.stat().st_size < 2000:
+            tasks.append(
+                (
+                    f"https://ftp.cpc.ncep.noaa.gov/precip/CMORPH1_BC_00Z/bin/clim_dly/clim_dly.{m_nd}",
+                    clim_file,
+                    False,
+                )
+            )
+
+    # 3. Exécution parallélisée des téléchargements (16 workers max)
+    if tasks:
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            executor.map(lambda p: manage_download(p[0], p[1], p[2]), tasks)
+    else:
+        print("🔍 All CMORPH cache assets are already complete and local.")
+
+    # 4. Téléchargement et correction des fichiers de contrôle GradS (.ctl)
+    download_file(
+        "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH1_BC_00Z/bin/clim_dly/cmorph.ctl",
+        daily_dir / "cmorph.ctl",
+    )
+    download_file(
+        "https://ftp.cpc.ncep.noaa.gov/precip/CMORPH1_BC_00Z/bin/clim_dly/cmorphclim.ctl",
+        clim_dir / "cmorphclim.ctl",
+    )
+
+    start_date_str = (today - timedelta(days=180)).strftime("%d%b%Y")
+    generate_ctl(
+        daily_dir / "cmorph.ctl",
+        daily_dir / "cmorph.ctl",
+        {"01jan1998": start_date_str, "99999": "180", "^CMORPH_V0.x_ADJ_0.25deg-DLY_00Z": "^CMORPH_V1.0_ADJ_0.25deg-DLY_00Z"},
+    )
+    generate_ctl(
+        clim_dir / "cmorphclim.ctl",
+        clim_dir / "cmorphclim.ctl",
+        {"01jan1998": start_date_str, "99999": "180"},
+    )
+
+    print(f"✅ CMORPH Synchronization Complete.")
 
 def run_retrieval_vhi():
     INIT_DAY = 0

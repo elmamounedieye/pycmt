@@ -7,6 +7,7 @@ from pycmt.core.downloader import (
     download_arc2_data,
     download_gadm_country,
     download_rfe2,
+    download_cmorph_data,
     download_runoff_data,
     download_spi,
     download_spp_noaa,
@@ -93,11 +94,13 @@ def plot_precip_ts(country: str, rndta: str, rsl, ts_rsl):
         download_arc2_data()
     if rndta.lower() == "rfe2":
         download_rfe2()
+    if rndta.lower()== "cmorph":
+        download_cmorph_data()
 
-    plot_precip(rsl, config[rsl], country_iso, country, rndta)
+    """plot_precip(rsl, config[rsl], country_iso, country, rndta)
     generate_tseries(country_iso, country, rndta)
     generate_html_map(country, rndta)
-    print(f"🎉 Spatial maps and time series complete.")
+    print(f"🎉 Spatial maps and time series complete.")"""
     return country_iso
 
 def generate_spp(country, country_iso):

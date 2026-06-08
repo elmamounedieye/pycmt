@@ -9,6 +9,7 @@ from pycmt.core.downloader import (
     download_arc2_data,
     download_gadm_country,
     download_rfe2,
+    download_cmorph_data,
     download_runoff_data,
     download_spi,
     download_spp_noaa,
@@ -56,6 +57,13 @@ def pipeline_climonitor_complet(
             destination = package_root / "data" / "gis_resources" / "countries" / "AFR_adm"
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copytree(source, destination, dirs_exist_ok=True)
+        elif country == "World":
+            country_iso = "WRL"
+            package_root = Path(__file__).resolve().parent
+            source = package_root / "data" / "WRL_adm"
+            destination = package_root / "data" / "gis_resources" / "countries" / "WRL_adm"
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copytree(source, destination, dirs_exist_ok=True)
         else:
             country_iso = get_country_iso(country)
             download_gadm_country(country_iso)
@@ -68,6 +76,8 @@ def pipeline_climonitor_complet(
             download_arc2_data()
         elif rndta.lower() == "rfe2":
             download_rfe2()
+        if rndta.lower()== "cmorph":
+            download_cmorph_data()
 
         plot_precip(rsl, RESOLUTION_CONFIG[rsl], country_iso, country, rndta)
         generate_tseries(country_iso, country, rndta)
@@ -144,8 +154,8 @@ async def run_climate_monitor(
     if resolution not in RESOLUTION_CONFIG:
         raise HTTPException(status_code=400, detail=f"Invalid resolution. Please choose among : {list(RESOLUTION_CONFIG.keys())}")
         
-    if source_data.lower() not in ["arc2", "rfe2"]:
-        raise HTTPException(status_code=400, detail="Invalid data soure. Choose 'arc2' or 'rfe2'.")
+    if source_data.lower() not in ["arc2", "rfe2", "cmorph"]:
+        raise HTTPException(status_code=400, detail="Invalid data soure. Choose 'arc2' or 'rfe2' or 'cmorph.")
 
     background_tasks.add_task(
         pipeline_climonitor_complet, 

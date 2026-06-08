@@ -76,7 +76,7 @@ def prepare_data_for_week(wk_info, week_idx, vhi_path):
     # 1. Identification du fichier satellite source
     # Le script cherche NPP ou J01
     FIX_DIR = Path(__file__).resolve().parents[1] / "data"
-    print(f" starting preparing data for week")
+    #print(f" starting preparing data for week")
     prefix = "VHP.G04.C07"
     suffix = f"P{wk_info['file_tag']}.VH.nc"
     
@@ -93,7 +93,7 @@ def prepare_data_for_week(wk_info, week_idx, vhi_path):
     #cur = os.getcwd()
     #print(f"current path === {cur}")
     if not source_file:
-        print(f"!!! Données manquantes : Semaine {wk_info['week_str']} ({wk_info['year']})")
+        print(f"!!! Missing data : Week {wk_info['week_str']} ({wk_info['year']})")
         return
 
     # 2. Préparation du fichier de travail (vhi.nc)
@@ -110,10 +110,10 @@ def prepare_data_for_week(wk_info, week_idx, vhi_path):
                 ydel = lines[1].split()[8]
 
     # --- LOG ---
-    print(f"--- SEMAINE {week_idx} (Sem. {wk_info['week_str']}) ---")
-    print(f"Période : {wk_info['bgn_str']} au {wk_info['end_str']}")
-    print(f"Source  : {source_file}")
-    print(f"YDEL    : {ydel}")    
+    print(f"--- WEEK {week_idx} (Wk. {wk_info['week_str']}) ---")
+    print(f"Période : {wk_info['bgn_str']} to {wk_info['end_str']}")
+    #print(f"Source  : {source_file}")
+    #print(f"YDEL    : {ydel}")    
     #if os.path.exists("vhi.nc"):
     #    os.remove("vhi.nc")
     #print(f" Ending preparing data for week")
@@ -313,7 +313,7 @@ def do_vhi(country, country_iso):
 
             
 
-    print("\nFin du script.")
+    #print("\nFin du script.")
 ######End VHI #######
 
 ###### Beginning SPP ######
@@ -550,7 +550,7 @@ def run_orchestrator_spp(country, country_iso, rndta, mask_enabled=True):
         gl.xlocator = gl.ylocator = plt.MultipleLocator(10)
 
         plt.savefig(output_dir / f"spp_{country}_{rndta}_Month{month_val}Proj{proj_val}.png", dpi=150)#, bbox_inches='tight')
-        plt.clf()
+        #plt.clf()
         plt.close(fig)
 
     print(f"✅ SPP maps for {rndta} are generated.")       #print(f"Saved: {output_name}")
@@ -754,7 +754,7 @@ def generate_spi(country_iso, country, rndta):
 
         # --- 7. SAUVEGARDE NETTE ---
         plt.savefig(output_dir / f"{country}_spi_{rndta}_{p}mo.png", dpi=150, bbox_inches='tight')
-        plt.clf()
+        #plt.clf()
         plt.close(fig)
 
     print(f"✅ SPI maps generated for {country}.")
