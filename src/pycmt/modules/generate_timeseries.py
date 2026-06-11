@@ -117,9 +117,15 @@ def generate_tseries(country_iso, country, rndta):
         )
         clim_path = base_dir / "rfe2_data" / "rfe2_clim" / "rfe2clim.ctl"
         precip_var = "r"
+    elif rndta.lower() == "cmorph":
+        daily_precip_path = (
+            base_dir / "CMORPH" / "cmorph_daily" / "cmorph.ctl"
+        )
+        clim_path = base_dir / "CMORPH" / "cmorph_clim" / "cmorphclim.ctl"
+        precip_var = "r"
     else:
         raise ValueError(
-            f"Data source unknown : {rndta}. Select 'arc2' or 'rfe2'."
+            f"Data source unknown : {rndta}. Select 'arc2' or 'rfe2' or 'cmorph."
         )
 
     abs_daily_path = daily_precip_path.resolve()
@@ -154,18 +160,38 @@ def generate_tseries(country_iso, country, rndta):
 
             for p in periodes:
 
-                pcur_ts = (
-                    daily_data[precip_var]
-                    .sel(lat=lt, lon=ln, method="nearest")
-                    .isel(time=slice(-p, None))
-                    .load()
-                )
-                pclim_ts = (
-                    clim_data[precip_var]
-                    .sel(lat=lt, lon=ln, method="nearest")
-                    .isel(time=slice(-p, None))
-                    .load()
-                )
+                if rndta =="cmorph":
+                    pcur_ts = (
+                        daily_data[precip_var]
+                        .sel(lat=lt, lon=ln, method="nearest")
+                        .isel(time=slice(-p, None), lev =-1)
+                        .load()
+                    )
+                    pclim_ts = (
+                        clim_data[precip_var]
+                        .sel(lat=lt, lon=ln, method="nearest")
+                        .isel(time=slice(-p, None), lev =-1)
+                        .load()
+                    )
+                else:
+                    pcur_ts = (
+                        daily_data[precip_var]
+                        .sel(lat=lt, lon=ln, method="nearest")
+                        .isel(time=slice(-p, None))
+                        .load()
+                    )
+                    pclim_ts = (
+                        clim_data[precip_var]
+                        .sel(lat=lt, lon=ln, method="nearest")
+                        .isel(time=slice(-p, None))
+                        .load()
+                    )
+                """if rndta =="cmorph":
+                    daily_slice = daily_data[precip_var].isel(time=slice(-p-1, None), lev =-1).load()
+                    clim_slice = clim_data[precip_var].isel(time=slice(-p-1, None), lev =-1).load()
+                else:
+                    daily_slice = daily_data[precip_var].isel(time=slice(-p-1, None)).load()
+                    clim_slice = clim_data[precip_var].isel(time=slice(-p-1, None)).load()"""
 
                 generate_rainfall_plot(
                     pcur_ts,

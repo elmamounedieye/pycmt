@@ -57,6 +57,34 @@ def run_uploader(allowed_extensions=".ctl, .nc, .txt, .idx", subfolder="data"):
     print("Select the file and click validate:")
     display(uploader, btn, out)
 
+def dowload_all_data(rndta: str):
+    print(f"📥 Downloading {rndta} data...")
+    if rndta.lower() == "arc2":
+        download_arc2_data()
+    if rndta.lower() == "rfe2":
+        download_rfe2()
+    if rndta.lower()== "cmorph":
+        download_cmorph_data()
+
+    print(f"📥 Downloading RFE2 SPP...")
+    download_spp_noaa("rfe2")
+    print(f"📥 Downloading CMORPH SPP...")
+    download_spp_noaa("cmorph")
+
+    print(f"📥 Downloading Runoff...")
+    download_runoff_data()
+    print(f"📥 Downloading Soil Moisture...")
+    download_xsm_data()
+    download_spi("cmorph")
+    download_spi("rfe2")
+
+    print(f"📥 Téléchargement VHI...")
+    run_retrieval_vhi()
+
+    print(f"Download complete!")
+
+
+
 def plot_precip_ts(country: str, rndta: str, rsl, ts_rsl):
     if country == "Africa":
         country_iso = "AFR"
@@ -90,24 +118,25 @@ def plot_precip_ts(country: str, rndta: str, rsl, ts_rsl):
     generate_pixel_arguments(ts_rsl, country_iso, country)
     plot_pix_coordinates(country, country_iso, rndta)
     
+    """
     if rndta.lower() == "arc2":
         download_arc2_data()
     if rndta.lower() == "rfe2":
         download_rfe2()
     if rndta.lower()== "cmorph":
-        download_cmorph_data()
+        download_cmorph_data()"""
 
-    """plot_precip(rsl, config[rsl], country_iso, country, rndta)
+    plot_precip(rsl, config[rsl], country_iso, country, rndta)
     generate_tseries(country_iso, country, rndta)
     generate_html_map(country, rndta)
-    print(f"🎉 Spatial maps and time series complete.")"""
+    print(f"🎉 Spatial maps and time series complete.")
     return country_iso
 
 def generate_spp(country, country_iso):
-    print(f"📥 Downloading RFE2 SPP...")
+    """print(f"📥 Downloading RFE2 SPP...")
     download_spp_noaa("rfe2")
     print(f"📥 Downloading CMORPH SPP...")
-    download_spp_noaa("cmorph")
+    download_spp_noaa("cmorph")"""
     
     print(f"⚙️ Generating RFE2 SPP...")
     run_orchestrator_spp(country, country_iso, "rfe2")
@@ -115,13 +144,13 @@ def generate_spp(country, country_iso):
     run_orchestrator_spp(country, country_iso, "cmorph")
     print(f"✅ SPP complete.")
 
-def generate_spi_(country, country_iso):
-    print(f"📥 Downloading Runoff...")
+def generate_spis(country, country_iso):
+    """print(f"📥 Downloading Runoff...")
     download_runoff_data()
     print(f"📥 Downloading Soil Moisture...")
     download_xsm_data()
     download_spi("cmorph")
-    download_spi("rfe2")
+    download_spi("rfe2")"""
 
     print(f"⚙️ Generating Runoff...")
     generate_runoff(country_iso, country)
@@ -134,8 +163,8 @@ def generate_spi_(country, country_iso):
     print(f"✅ SPI complete.")
 
 def generated_vhi(country, country_iso):
-    print(f"📥 Téléchargement VHI...")
-    run_retrieval_vhi()
+    """print(f"📥 Téléchargement VHI...")
+    run_retrieval_vhi()"""
     print(f"⚙️ Generating VHI...")
     do_vhi(country, country_iso)
     print(f"✅ VHI complete.")

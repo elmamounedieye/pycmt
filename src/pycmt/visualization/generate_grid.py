@@ -227,7 +227,7 @@ def plot_pix_coordinates(country, country_iso, rndta):
     base_data = Path(__file__).resolve().parents[1] / "data"
     country_latlon = base_data / f"{country}_latlon"
     pixel_args_path = base_data / f"pixelargs_{country}.txt" #Path(pixel_args)
-    country_stns_path = base_data / f"{country.lower()}_stns.txt"
+    country_stns_path = base_data / f"{country}_stns.txt"
     shpfile_path = base_data / "gis_resources" / "countries" / f"{country_iso}_adm"
     mask_path = base_data / "gis_resources" / f"country_masks0p0375" / "365dcal" / f"{country_iso}_mask.nc"
 
@@ -254,7 +254,8 @@ def plot_pix_coordinates(country, country_iso, rndta):
         adm0 = gpd.read_file(shpfile_path / f"{country_iso}_adm0.shp")
         adm1 = gpd.read_file(shpfile_path / f"{country_iso}_adm1.shp")
 
-        area_geom = adm0.geometry.iloc[0]
+        #area_geom = adm0.geometry.iloc[0]
+        area_geom = adm0.geometry.unary_union
         if not area_geom.is_valid:
             area_geom = area_geom.buffer(0)
 
@@ -285,10 +286,15 @@ def plot_pix_coordinates(country, country_iso, rndta):
         )
         grid_points = grid_points_raw[grid_interior_mask].copy()
 
-        stn_interior_mask = stn_points_raw.apply(
+        #####Addition
+        #grid_points = grid_points_raw.copy()
+        stn_points = stn_points_raw.copy()
+
+        """stn_interior_mask = stn_points_raw.apply(
             lambda row: check_interior_point(row['lon'], row['lat'], area_geom), axis=1
         )
-        stn_points = stn_points_raw[stn_interior_mask].copy()
+        stn_points = stn_points_raw[stn_interior_mask].copy()"""
+
 
         # =====================================================================
         # ÉTAPE DE SAUVEGARDE STRICTE DU FICHIER SOURCE AVEC LES 10 COLONNES
@@ -306,7 +312,7 @@ def plot_pix_coordinates(country, country_iso, rndta):
         # =====================================================================
 
         # Tracé des points filtrés
-        ax.scatter(grid_points['lon'], grid_points['lat'], s=10, c='cyan', label='Grid', zorder=3)
+        ax.scatter(grid_points['lon'], grid_points['lat'], s=20, c='cyan', label='Grid', zorder=3)
         ax.scatter(stn_points['lon'], stn_points['lat'], s=25, c='red', label='Stations', marker='s', zorder=4)
 
         # --- Plot des frontières ---
@@ -326,8 +332,11 @@ def plot_pix_coordinates(country, country_iso, rndta):
     ax.set_xlim(lon1, lon2)
     ax.set_ylim(lat1, lat2)
 
-    ax.xaxis.set_major_locator(ticker.MultipleLocator(10)) 
-    ax.yaxis.set_major_locator(ticker.MultipleLocator(10)) 
+    #ax.xaxis.set_major_locator(ticker.MultipleLocator(10)) 
+    #ax.yaxis.set_major_locator(ticker.MultipleLocator(10)) 
+
+    ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=6, steps=[1, 2, 5, 10]))
+    ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=6, steps=[1, 2, 5, 10]))
 
     ax.set_xlabel('E', fontweight='bold')
     ax.set_ylabel('N', fontweight='bold')

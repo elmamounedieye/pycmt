@@ -13,7 +13,6 @@
         .sidebar { width: var(--sidebar-width); height: 100vh; background: #1a252f; color: white; padding: 20px; position: fixed; left: 0; top: 0; z-index: 1000; }
         .sidebar h5 { color: var(--accent-color); font-size: 1.1rem; border-bottom: 1px solid #34495e; padding-bottom: 15px; margin-bottom: 25px; }
 
-        /* Menu de navigation par boutons */
         .nav-menu { display: flex; flex-direction: column; gap: 8px; }
         .nav-item { 
             background: transparent; border: none; color: #bdc3c7; text-align: left; 
@@ -26,7 +25,6 @@
         /* Main Layout */
         .main-content { margin-left: var(--sidebar-width); height: 100vh; display: flex; flex-direction: column; }
 
-        /* Zone d'affichage */
         .scroll-area { 
             flex-grow: 1; 
             overflow-y: auto; 
@@ -38,7 +36,6 @@
             background: #f8f9fa;
         }
 
-        /* Conteneur de la grille */
         .matrix-container { 
             display: flex; 
             flex-direction: column; 
@@ -48,24 +45,22 @@
             margin: 0 auto;
         }
 
-        /* CONFIGURATION RIGUREUSE DU TABLEAU (HEADER & ROW ALIGNMENT) */
         .matrix-header, .matrix-row {
             display: flex;
             align-items: center;
             justify-content: flex-start;
-            gap: 15px;                /* Espace identique entre chaque colonne */
-            padding: 15px 25px;       /* Marges internes identiques au pixel près */
+            gap: 15px;                
+            padding: 15px 25px;       
             width: 100%;
         }
 
         .matrix-header {
             background: transparent;
-            margin-bottom: -5px;      /* Rapproche légèrement les titres des cartes */
+            margin-bottom: -5px;      
         }
 
-        /* Alignement parfait de la première colonne (Labels) */
         .header-blank, .row-label {
-            width: 140px;             /* Largeur identique stricte */
+            width: 140px;             
             flex-shrink: 0;
         }
 
@@ -79,9 +74,8 @@
             padding-right: 15px;
         }
 
-        /* Alignement parfait des colonnes de données (Titres & Cartes) */
         .column-title, .thumb-box {
-            width: 150px;             /* Largeur identique stricte pour chaque carte et son titre */
+            width: 150px;             
             flex-shrink: 0;
         }
 
@@ -94,7 +88,7 @@
             letter-spacing: 0.8px;
         }
 
-        /* Style des lignes de cartes */
+        /* linestyles of maps*/
         .matrix-row { 
             background: #ffffff; 
             border-radius: 10px;
@@ -106,15 +100,51 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); 
         }
         
-        .zoomable { 
-            width: 100%; border: 1px solid #e2e8f0; border-radius: 6px; cursor: zoom-in; 
-            transition: all 0.2s ease; background: #fff;
+        .thumb-box {
+            width: 150px;
+            flex-shrink: 0;
+            overflow: hidden;
         }
-        .zoomable:not(.is-zoomed):hover { 
-                    transform: scale(1.03); 
-                    border-color: var(--accent-color); 
-                }
-        /* Miniatures HTML (Time Series) */
+
+        .zoomable {
+            width: 100%;
+            display: block;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: zoom-in;
+            background: #fff;
+            transition:
+                transform 0.2s ease,
+                border-color 0.2s ease;
+        }
+
+        .thumb-box:hover .zoomable {
+            transform: scale(1.03);
+            border-color: var(--accent-color);
+        }
+
+        /* LIGHTBOX */
+
+        .lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 99999;
+            justify-content: center;
+            align-items: center;
+            cursor: zoom-out;
+        }
+
+        .lightbox img {
+            max-width: 95vw;
+            max-height: 95vh;
+            border: 5px solid white;
+            border-radius: 4px;
+            box-shadow: 0 0 80px rgba(0,0,0,0.8);
+        }
+        
+        /*HTML (Time Series) */
         .thumb-iframe {
             width: 150px; height: 100px; border: 1px solid #e2e8f0; border-radius: 6px;
             overflow: hidden; position: relative; background: white;
@@ -126,7 +156,7 @@
         }
         .iframe-overlay { position: absolute; top:0; left:0; width:100%; height:100%; cursor:pointer; }
 
-        /* Zoom Plein Écran */
+        /* Full screen zoom */
         .is-zoomed { 
             position: fixed; 
             top: 50%; 
@@ -162,7 +192,9 @@
     </div>
 </div>
 
-<div class="overlay" onclick="closeZoom()"></div>
+<div id="lightbox" class="lightbox" onclick="closeZoom()">
+    <img id="lightbox-img" alt="Zoom">
+</div>
 
 <script>
 const COUNTRY = "{{ country }}";
@@ -180,19 +212,36 @@ function switchTab(btn, cat) {
 }
 
 function toggleZoom(img) {
-    if (img.classList.contains('is-zoomed')) {
-        closeZoom();
-    } else {
-        img.classList.add('is-zoomed');
-        document.querySelector('.overlay').style.display = 'block';
-    }
+
+    const lightbox =
+        document.getElementById("lightbox");
+
+    const lightboxImg =
+        document.getElementById("lightbox-img");
+
+    lightboxImg.src = img.src;
+
+    lightbox.style.display = "flex";
 }
 
 function closeZoom() {
-    const zoomed = document.querySelector('.zoomable.is-zoomed');
-    if (zoomed) zoomed.classList.remove('is-zoomed');
-    document.querySelector('.overlay').style.display = 'none';
+
+    document.getElementById("lightbox")
+        .style.display = "none";
 }
+
+document.addEventListener("keydown", function(event) {
+
+    if (event.key === "Escape") {
+        closeZoom();
+    }
+});
+
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeZoom();
+    }
+});
 
 function createThumb(path) {
     return `

@@ -61,13 +61,13 @@ from shapely.validation import make_valid  # Blindage topologique
 def generate_runoff(country_iso, country):
     base_dir = Path(__file__).resolve().parents[1] / "data" 
     mask_path = base_dir / "gis_resources" / f"country_masks0p036" / "365dcal" / f"{country_iso}_mask.nc"
-    runoff_dir = base_dir / "SPI" / "data" / "Runoff"
+    runoff_dir = base_dir / "spi" / "data" / "Runoff"
     
     if not os.path.exists(runoff_dir):
         os.makedirs(runoff_dir)
     runoff_dir = os.path.relpath(runoff_dir)
     
-    output_dir = base_dir / "SPI" / "Runoff_maps" / f"{country}"
+    output_dir = base_dir / "spi" / "Runoff_maps" / f"{country}"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # =========================================================================
@@ -98,14 +98,14 @@ def generate_runoff(country_iso, country):
 
     # --- 2. MASQUES ET DONNÉES ---
     PATH_MASK_NC = xr.open_dataset(mask_path)
-    landmask = open_CtlDataset(os.path.join(runoff_dir, 'landmask.ctl'))
+    #landmask = open_CtlDataset(os.path.join(runoff_dir, 'landmask.ctl'))
     
     def lon_360_to_180(ds):
         ds.coords['lon'] = (ds.coords['lon'] + 180) % 360 - 180.25
         return ds.sortby('lon')
 
-    landmask_recordinated = lon_360_to_180(landmask)
-    land = landmask_recordinated["mask"].isel(time=-1, lev=-1).load()
+    #landmask_recordinated = lon_360_to_180(landmask)
+    #land = landmask_recordinated["mask"].isel(time=-1, lev=-1).load()
     mask_sorted = PATH_MASK_NC['mask_data'].sortby('lat')
 
     # Configuration des niveaux de couleurs
@@ -255,8 +255,8 @@ from shapely.validation import make_valid  # Blindage topologique anti-crash
 def generate_soilmoisture(country_iso, country):
     base_dir = Path(__file__).resolve().parents[1] / "data" 
     mask_path = base_dir / "gis_resources" / f"country_masks0p036" / "365dcal" / f"{country_iso}_mask.nc"
-    soilmoisture_dir = os.path.relpath(base_dir / "SPI" / "data" / "soilmoisture")
-    output_dir = base_dir / "SPI" / "Soilmoisture_maps" / f"{country}"
+    soilmoisture_dir = os.path.relpath(base_dir / "spi" / "data" / "soilmoisture")
+    output_dir = base_dir / "spi" / "Soilmoisture_maps" / f"{country}"
     output_dir.mkdir(parents=True, exist_ok=True)
     
     # =========================================================================

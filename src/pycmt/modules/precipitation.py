@@ -114,8 +114,10 @@ def plot_precip(rsl, rsl_name, country_iso, country, rndta):
 
     # Création du masque inversé (le calque de cache extérieur)
     world_box = sgeom.box(bounds[0]-10, bounds[1]-10, bounds[2]+10, bounds[3]+10)
-    inverse_mask = world_box.difference(country_geom)
-
+    
+    if country_iso != "CAH":
+        inverse_mask = world_box.difference(country_geom)
+        
     periodes = [7, 10, 30, 60, 90, 180]
 
     # =========================================================
@@ -168,8 +170,12 @@ def plot_precip(rsl, rsl_name, country_iso, country, rndta):
     for p in periodes:
         print(f"\n Period : {p} days")
 
-        daily_slice = daily_data[precip_var].isel(time=slice(-p, None))
-        clim_slice = clim_data[precip_var].isel(time=slice(-p, None))
+        if rndta =="cmorph":
+            daily_slice = daily_data[precip_var].isel(time=slice(-p-1, None), lev =-1)
+            clim_slice = clim_data[precip_var].isel(time=slice(-p-1, None), lev =-1)
+        else:
+            daily_slice = daily_data[precip_var].isel(time=slice(-p-1, None))
+            clim_slice = clim_data[precip_var].isel(time=slice(-p-1, None))
 
         pcur = p * daily_slice.mean(dim='time').load()
         pclim = p * clim_slice.mean(dim='time').load()
@@ -201,7 +207,7 @@ def plot_precip(rsl, rsl_name, country_iso, country, rndta):
         anom_masked = anom.where(drymask == 1) #& (mask_resized == 1))
         pcur_masked = pcur.where(drymask == 1) #& (mask_resized == 1))
         pclim_masked = pclim.where(drymask == 1)# & (mask_resized == 1))
-        pcnp_masked = pcnp_clean.where(mask_resized == 1)
+        pcnp_masked = pcnp_clean#.where(mask_resized == 1)
 
         plot_configs = {
             "precip_anomaly": {"data": anom_masked, "levels": limits_anom, "colors": anom_colors, "title": "Anomaly", "unit": "mm"},
@@ -249,7 +255,9 @@ def plot_precip(rsl, rsl_name, country_iso, country, rndta):
             # 🟡 APPLICATION DU MASQUE INVERSÉ EXTERNE (zorder 5)
             # =====================================================================
             # Recouvre hermétiquement toutes les coulures de lissage hors frontières
-            ax.add_geometries([inverse_mask], ccrs.PlateCarree(), 
+            
+            if country_iso != "CAH":
+                ax.add_geometries([inverse_mask], ccrs.PlateCarree(), 
                               facecolor="#ffffff", edgecolor='none', zorder=5)
 
             # =====================================================================

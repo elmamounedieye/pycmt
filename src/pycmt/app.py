@@ -57,11 +57,11 @@ def pipeline_climonitor_complet(
             destination = package_root / "data" / "gis_resources" / "countries" / "AFR_adm"
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copytree(source, destination, dirs_exist_ok=True)
-        elif country == "World":
-            country_iso = "WRL"
+        elif country == "CAH":
+            country_iso = "CAH"
             package_root = Path(__file__).resolve().parent
-            source = package_root / "data" / "WRL_adm"
-            destination = package_root / "data" / "gis_resources" / "countries" / "WRL_adm"
+            source = package_root / "data" / "CAH_adm"
+            destination = package_root / "data" / "gis_resources" / "countries" / "CAH_adm"
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copytree(source, destination, dirs_exist_ok=True)
         else:
@@ -78,11 +78,11 @@ def pipeline_climonitor_complet(
             download_rfe2()
         if rndta.lower()== "cmorph":
             download_cmorph_data()
-
+        
         plot_precip(rsl, RESOLUTION_CONFIG[rsl], country_iso, country, rndta)
         generate_tseries(country_iso, country, rndta)
         generate_html_map(country, rndta)
-        
+        """
         
         # --- Module SPP ---
         if run_spp:
@@ -92,26 +92,26 @@ def pipeline_climonitor_complet(
             run_orchestrator_spp(country, country_iso, "rfe2")
             run_orchestrator_spp(country, country_iso, "cmorph")
             print(f"✅ SPP Done.")
-
+        """
         # --- Module SPI / Runoff / Soil Moisture ---
         if run_spi:
             print(f"📥 Downloading and generating SPI, Runoff and Soil Moisture for {country}...")
-            download_runoff_data()
-            download_xsm_data()
-            download_spi("cmorph")
-            download_spi("rfe2")
+            #download_runoff_data()
+            #download_xsm_data()
+            #download_spi("cmorph")
+            #download_spi("rfe2")
             generate_runoff(country_iso, country)
             generate_soilmoisture(country_iso, country)
             calc_spi(country_iso, country, "cmorph")
             calc_spi(country_iso, country, "rfe2")
             print(f"✅ SPI, Runoff and Soil Moisture Done.")
-
+        """
         # --- Module VHI ---
         if run_vhi:
             print(f"📥 Donwloading and generating VHI for {country}...")
             run_retrieval_vhi()
             do_vhi(country, country_iso)
-            print(f"✅ VHI Done.")
+            print(f"✅ VHI Done.")"""
 
         build_country_dashboard(country, rndta)
         print(f"🎉 API pipeline successful for {country} ({rndta})")
