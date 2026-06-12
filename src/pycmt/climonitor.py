@@ -2,6 +2,8 @@ import os
 import shutil
 import time
 from pathlib import Path
+import unicodedata
+import re
 
 from pycmt.core.downloader import (
     download_arc2_data,
@@ -56,6 +58,20 @@ def run_uploader(allowed_extensions=".ctl, .nc, .txt, .idx", subfolder="data"):
     btn.on_click(upload_data)
     print("Select the file and click validate:")
     display(uploader, btn, out)
+
+
+def clean_country_name(name):
+    name = name.lower()
+    
+    name = name.replace("'", "_")
+    
+    name = ''.join(c for c in unicodedata.normalize('NFD', name) if unicodedata.category(c) != 'Mn')
+    
+    name = re.sub(r'[\s\-]+', '_', name)
+    
+    name = re.sub(r'_+', '_', name)
+    
+    return name.strip('_')
 
 def dowload_all_data(rndta: str):
     print(f"📥 Downloading {rndta} data...")
@@ -113,7 +129,7 @@ def plot_precip_ts(country: str, rndta: str, rsl, ts_rsl):
         0.1: '0p1',
         1.0: '1p0'
     }
-    
+    country = clean_country_name(country)
     run_workflow(country_iso, country)
     generate_pixel_arguments(ts_rsl, country_iso, country)
     plot_pix_coordinates(country, country_iso, rndta)
