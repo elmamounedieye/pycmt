@@ -106,7 +106,7 @@ def run_workflow(iso_code, country):
 
         output_path = generator.create_and_save_mask(rsl_val, bounds, f"{out_dir}/{iso_code}_mask.nc")
 
-    country_latlon = [country, round(bounds[1],0), round(bounds[3],0), round(bounds[0],0), round(bounds[2],0), rsl_val, rsl_val]  
+    country_latlon = [country, round(bounds[1],2), round(bounds[3],2), round(bounds[0],2), round(bounds[2],2), rsl_val, rsl_val]  
     #cur = os.getcwd()
     #print(f"cur : {cur}")
     country_info = Path(__file__).resolve().parents[1] / "data" / f"{country}_latlon"
