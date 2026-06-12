@@ -50,156 +50,82 @@ def get_px(lat, lon, lat1, lat2, lon1, lon2):
     return x_ratio * IMG_WIDTH, y_ratio * IMG_HEIGHT
 
 
-def generate_pixel_arguments(
-    dtarsl,
-    country_iso,
-    country_name
-    ):
-    """
-    Génère un fichier de paramètres de pixels
-    à partir d'une grille régulière définie
-    par :
-        - lat1, lat2
-        - lon1, lon2
-        - dtarsl (pas de grille)
-    """
+import numpy as np
+import pandas as pd
+from pathlib import Path
 
-    # =========================================================
-    # 1. PATHS
-    # =========================================================
+def generate_pixel_arguments(dtarsl, country_iso, country_name):
+    """
+    Génère un fichier de paramètres de pixels à partir d'une grille régulière.
+    Les colonnes px_x et px_y sont initialisées à 0.00 et seront calculées par Matplotlib.
+    """
+    # --- Paths ---
     latlon_path = Path(__file__).resolve().parents[1] / "data" / f"{country_name}_latlon"
     stn_file_path = Path(__file__).resolve().parents[1] / "data" / f"{country_name}_stns.txt"
-
     output_file = Path(__file__).resolve().parents[1] / "data" / f"pixelargs_{country_name}.txt"
 
-    # =========================================================
-    # 2. LECTURE DES LIMITES
-    # =========================================================
+    # --- Lecture des limites géographiques ---
     with open(latlon_path, 'r') as f:
-
         lines = f.readline().split()
-
-        country = lines[0]
-
         lat1, lat2 = float(lines[1]), float(lines[2])
         lon1, lon2 = float(lines[3]), float(lines[4])
 
-    # =========================================================
-    # 3. CONSTRUCTION DE LA GRILLE
-    # =========================================================
-    # Nord -> Sud
-    lats_unique = np.arange(
-        max(lat1, lat2),
-        min(lat1, lat2) - dtarsl,
-        -dtarsl
-    )
-
-    # Ouest -> Est
-    lons_unique = np.arange(
-        min(lon1, lon2),
-        max(lon1, lon2) + dtarsl,
-        dtarsl
-    )
+    # --- Construction de la Grille (Nord -> Sud, Ouest -> Est) ---
+    lats_unique = np.arange(max(lat1, lat2), min(lat1, lat2) - dtarsl, -dtarsl)
+    lons_unique = np.arange(min(lon1, lon2), max(lon1, lon2) + dtarsl, dtarsl)
 
     pixel_data = []
-
     idx = 1
 
-    # =========================================================
-    # 4. TRAITEMENT DE LA GRILLE
-    # =========================================================
+    # Traitement de la grille
     for lat in lats_unique:
-
         for lon in lons_unique:
-
             lat_r = round(lat, 4)
             lon_r = round(lon, 4)
 
-            px_x, px_y = calculate_pixels_corrected(
-                lat_r,
-                lon_r,
-                lat1,
-                lat2,
-                lon1,
-                lon2
-            )
-
             pixel_data.append({
-
                 'id': idx,
-
                 'lat_cent': f"{lat_r:.2f}",
                 'lon_cent': f"{lon_r:.2f}",
-
                 'lat_min': f"{(lat_r - dtarsl):.2f}",
                 'lat_max': f"{(lat_r + dtarsl):.2f}",
-
                 'lon_min': f"{(lon_r - dtarsl):.2f}",
                 'lon_max': f"{(lon_r + dtarsl):.2f}",
-
-                'px_x': f"{px_x:.4f}",
-                'px_y': f"{px_y:.4f}",
-
+                'px_x': "0.00",
+                'px_y': "0.00",
                 'type': 'grid'
             })
-
             idx += 1
 
-    # =========================================================
-    # 5. TRAITEMENT DES STATIONS
-    # =========================================================
-    with open(stn_file_path, 'r') as f:
+    # Traitement des Stations météo
+    if stn_file_path.exists():
+        with open(stn_file_path, 'r') as f:
+            for line in f:
+                parts = line.strip().split()
+                if not parts:
+                    continue
+                s_lat = float(parts[1])
+                s_lon = float(parts[2])
+                name = parts[3]
 
-        for line in f:
+                pixel_data.append({
+                    'id': idx,
+                    'lat_cent': f"{s_lat:.2f}",
+                    'lon_cent': f"{s_lon:.2f}",
+                    'lat_min': f"{(s_lat - dtarsl):.2f}",
+                    'lat_max': f"{(s_lat + dtarsl):.2f}",
+                    'lon_min': f"{(s_lon - dtarsl):.2f}",
+                    'lon_max': f"{(s_lon + dtarsl):.2f}",
+                    'px_x': "0.00",
+                    'px_y': "0.00",
+                    'type': name
+                })
+                idx += 1
 
-            parts = line.strip().split()
-
-            s_lat = float(parts[1])
-            s_lon = float(parts[2])
-            name = parts[3]
-            px_x, px_y = get_px(
-                s_lat,
-                s_lon,
-                lat1,
-                lat2,
-                lon1,
-                lon2
-            )
-            pixel_data.append({
-
-                'id': idx,
-
-                'lat_cent': f"{s_lat:.2f}",
-                'lon_cent': f"{s_lon:.2f}",
-
-                'lat_min': f"{(s_lat - dtarsl):.2f}",
-                'lat_max': f"{(s_lat + dtarsl):.2f}",
-
-                'lon_min': f"{(s_lon - dtarsl):.2f}",
-                'lon_max': f"{(s_lon + dtarsl):.2f}",
-
-                'px_x': f"{px_x:.4f}",
-                'px_y': f"{px_y:.4f}",
-
-                'type': name
-            })
-
-            idx += 1
-
-
-    # =========================================================
-    # 6. EXPORT FINAL
-    # =========================================================
+    # --- Export Initial ---
     df_final = pd.DataFrame(pixel_data)
-    #file = Path(output_file)
-    #file.unlink()
-    output_file = Path(__file__).resolve().parents[1] / "data" / f"pixelargs_{country_name}.txt"
-    df_final.to_csv(
-        output_file,
-        sep=' ',
-        index=True,
-        header=False
-    )
+    df_final.to_csv(output_file, sep=' ', index=False, header=False)
+    print(f"✅ Fichier de base généré avec succès : {output_file.name}")
 
     #print(f"✅ Fichier généré : {output_file} ({len(df_final)} lignes)")
 
@@ -252,6 +178,11 @@ def get_precise_html_pixels(lat, lon, lat1, lat2, lon1, lon2, img_width=1200, im
     return px_x, px_y
 
 
+
+
+
+def check_interior_point(lon, lat, area_geom):
+    return Point(lon, lat).within(area_geom)
 
 def plot_pix_coordinates(country, country_iso, rndta):
     # --- 1. CONFIGURATION DES CHEMINS ---
@@ -344,34 +275,37 @@ def plot_pix_coordinates(country, country_iso, rndta):
     ax.grid(True, linestyle='--', alpha=0.8)
     ax.legend()
 
-    # --- 5. CALCUL EXACT DES COORDONNÉES PIXELS (Résolution du décalage cumulé) ---
-    # On force le rendu des axes pour obtenir la bounding box réelle en pixels de la zone de dessin
+    # --- 5. CALCUL EXACT DES COORDONNÉES PIXELS (Moteur graphique Matplotlib) ---
+    # Force le rendu interne de la figure pour figer les axes et les projections
     fig.canvas.draw()
     
-    bbox = ax.get_window_extent()  # Récupère les coordonnées exactes de la zone cartographique utile
     img_height = fig.canvas.get_width_height()[1]
 
     def convert_geo_to_precise_pixel(lat, lon):
-        # 1. On demande à Matplotlib la coordonnée relative dans l'espace d'affichage de l'écran
         x_display, y_display = ax.transData.transform((lon, lat))
-        # 2. Inversion stricte de l'axe Y pour le HTML (0 en haut)
         px_x = x_display
-        px_y = img_height - y_display
+        px_y = img_height - y_display # Inversion Y stricte (0 en haut pour le HTML web)
         return f"{px_x:.2f}", f"{px_y:.2f}"
 
-    # Calcul et écriture pour la Grille
+    # Correction de l'erreur 'LossySetitemError' : on convertit explicitement les colonnes en type générique 'object'
+    grid_points['px_x'] = grid_points['px_x'].astype(object)
+    grid_points['px_y'] = grid_points['px_y'].astype(object)
+    stn_points['px_x'] = stn_points['px_x'].astype(object)
+    stn_points['px_y'] = stn_points['px_y'].astype(object)
+
+    # Remplissage dynamique des pixels pour la Grille
     for idx_row, row in grid_points.iterrows():
         px_x, px_y = convert_geo_to_precise_pixel(row['lat'], row['lon'])
         grid_points.at[idx_row, 'px_x'] = px_x
         grid_points.at[idx_row, 'px_y'] = px_y
 
-    # Calcul et écriture pour les Stations
+    # Remplissage dynamique des pixels pour les Stations
     for idx_row, row in stn_points.iterrows():
         px_x, px_y = convert_geo_to_precise_pixel(row['lat'], row['lon'])
         stn_points.at[idx_row, 'px_x'] = px_x
         stn_points.at[idx_row, 'px_y'] = px_y
 
-    # --- 6. SYNCHRONISÈ ET SAUVEGARDE DU FICHIER TEXTE SOURCE ---
+    # --- 6. SAUVEGARDE DU FICHIER TEXTE SOURCE SYNCHRONISÉ ---
     updated_pix_df = pd.concat([grid_points, stn_points], ignore_index=True)
     updated_pix_df = updated_pix_df[columns_structure]
     updated_pix_df.to_csv(pixel_args_path, sep=' ', header=False, index=False)
@@ -394,7 +328,7 @@ def plot_pix_coordinates(country, country_iso, rndta):
             html_areas_list.append(area)
 
         formatted_areas[str(prd)] = "\n".join(html_areas_list)
-        html_areas_list = [] # Reset pour la prochaine période
+        html_areas_list = [] # Reset du buffer pour le prochain pas de temps
         
     # --- 8. EXPORTS ET ENREGISTREMENTS PHYSIQUES ---
     ts_path = (Path(__file__).resolve().parents[1] / "data" / "ts_maps" / f"{country}" / rndta).resolve()
@@ -403,10 +337,10 @@ def plot_pix_coordinates(country, country_iso, rndta):
     filename = f"{country}_grid.png"
     full_save_path = ts_path / filename
     
-    # Enregistrement sans modification de la boîte de découpe (crucial pour l'alignement HTML)
+    # bbox_inches=None empêche Matplotlib de découper l'image de manière imprévisible au dernier moment
     plt.savefig(full_save_path, dpi=100, bbox_inches=None) 
     plt.close(fig) 
     
-    # Enregistrement final du JSON contenant les balises HTML <area> réalignées
+    # Enregistrement final du JSON pour le web frontend
     with open(base_data / f"formatted_areas_{country}.json", "w", encoding="utf-8") as f:
         json.dump(formatted_areas, f, indent=4, ensure_ascii=False)
