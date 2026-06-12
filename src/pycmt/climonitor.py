@@ -153,6 +153,7 @@ def generate_spp(country, country_iso):
     download_spp_noaa("rfe2")
     print(f"📥 Downloading CMORPH SPP...")
     download_spp_noaa("cmorph")"""
+    country = clean_country_name(country)
     
     print(f"⚙️ Generating RFE2 SPP...")
     run_orchestrator_spp(country, country_iso, "rfe2")
@@ -168,6 +169,7 @@ def generate_spis(country, country_iso):
     download_spi("cmorph")
     download_spi("rfe2")"""
 
+    country = clean_country_name(country)
     print(f"⚙️ Generating Runoff...")
     generate_runoff(country_iso, country)
     print(f"⚙️ Generating Soil Moisture...")
@@ -181,11 +183,13 @@ def generate_spis(country, country_iso):
 def generated_vhi(country, country_iso):
     """print(f"📥 Téléchargement VHI...")
     run_retrieval_vhi()"""
+    country = clean_country_name(country)
     print(f"⚙️ Generating VHI...")
     do_vhi(country, country_iso)
     print(f"✅ VHI complete.")
 
 def generate_dashboard(country, rndta):
+    country = clean_country_name(country)
     build_country_dashboard(country, rndta)
 
 
