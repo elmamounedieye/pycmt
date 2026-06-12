@@ -41,6 +41,7 @@ def calculate_pixels_corrected(lat, lon, lat1, lat2, lon1, lon2):
     return xxxx1, yyyy1
 
 
+
 def get_px(lat, lon, lat1, lat2, lon1, lon2):
     IMG_WIDTH = 1200
     IMG_HEIGHT = 927
@@ -207,12 +208,25 @@ def generate_pixel_arguments(
 
 ####### Generating grid pixel points########
   # N'oubliez pas l'import en haut du script
-def get_exact_pixels(lat, lon, ax, fig):
+def get_exact_pixels_(lat, lon, ax, fig):
     # Transformation Data (Géo) -> Display (Pixels)
     x_display, y_display = ax.transData.transform((lon, lat))
     width, height = fig.canvas.get_width_height()
     
     # Inversion Y pour le HTML (0 en haut)
+    px_x = x_display
+    px_y = height - y_display
+    return px_x, px_y
+
+def get_exact_pixels(lat, lon, ax, fig):
+    # FORCE le dessin interne de matplotlib pour mettre à jour les axes et les marges
+    fig.canvas.draw() 
+    
+    # Transformation Data (Géo) -> Display (Pixels de l'image finale)
+    x_display, y_display = ax.transData.transform((lon, lat))
+    width, height = fig.canvas.get_width_height()
+    
+    # Inversion de l'axe Y pour le HTML (0,0 en haut à gauche)
     px_x = x_display
     px_y = height - y_display
     return px_x, px_y
@@ -226,7 +240,7 @@ def plot_pix_coordinates(country, country_iso, rndta):
     # --- Chemins ---
     base_data = Path(__file__).resolve().parents[1] / "data"
     country_latlon = base_data / f"{country}_latlon"
-    pixel_args_path = base_data / f"pixelargs_{country}.txt" #Path(pixel_args)
+    pixel_args_path = base_data / f"pixelargs_{country}.txt"
     country_stns_path = base_data / f"{country}_stns.txt"
     shpfile_path = base_data / "gis_resources" / "countries" / f"{country_iso}_adm"
     mask_path = base_data / "gis_resources" / f"country_masks0p0375" / "365dcal" / f"{country_iso}_mask.nc"
@@ -240,7 +254,6 @@ def plot_pix_coordinates(country, country_iso, rndta):
         lat1, lat2 = float(line[1]), float(line[2])
         lon1, lon2 = float(line[3]), float(line[4])
 
-    # Lecture sécurisée des DataFrames avec les 10 colonnes bien ordonnées
     columns_structure = ['idx', 'lat', 'lon', 'lat_min', 'lat_max', 'lon_min', 'lon_max', 'px_x', 'px_y', 'name']
     pix_df = pd.read_csv(pixel_args_path, sep=r'\s+', header=None, names=columns_structure)
     stns_df = pd.read_csv(country_stns_path, sep=r'\s+', header=None, names=['idx', 'lat', 'lon', 'name'])
@@ -248,13 +261,13 @@ def plot_pix_coordinates(country, country_iso, rndta):
     nstns = len(stns_df)
     stngrd = len(pix_df) - nstns
 
+    # --- Initialisation Figure (Taille stricte 1200x900 si dpi=100) ---
     fig, ax = plt.subplots(figsize=(12, 9), dpi=100)
 
     try:
         adm0 = gpd.read_file(shpfile_path / f"{country_iso}_adm0.shp")
         adm1 = gpd.read_file(shpfile_path / f"{country_iso}_adm1.shp")
 
-        #area_geom = adm0.geometry.iloc[0]
         area_geom = adm0.geometry.unary_union
         if not area_geom.is_valid:
             area_geom = area_geom.buffer(0)
@@ -280,36 +293,12 @@ def plot_pix_coordinates(country, country_iso, rndta):
         grid_points_raw = pix_df.iloc[:stngrd].copy()
         stn_points_raw = pix_df.iloc[stngrd:].copy()
 
-        # --- Filtrage Géospatial (Points Intérieurs Uniquement) ---
+        # Filtrage Géospatial
         grid_interior_mask = grid_points_raw.apply(
             lambda row: check_interior_point(row['lon'], row['lat'], area_geom), axis=1
         )
         grid_points = grid_points_raw[grid_interior_mask].copy()
-
-        #####Addition
-        #grid_points = grid_points_raw.copy()
         stn_points = stn_points_raw.copy()
-
-        """stn_interior_mask = stn_points_raw.apply(
-            lambda row: check_interior_point(row['lon'], row['lat'], area_geom), axis=1
-        )
-        stn_points = stn_points_raw[stn_interior_mask].copy()"""
-
-
-        # =====================================================================
-        # ÉTAPE DE SAUVEGARDE STRICTE DU FICHIER SOURCE AVEC LES 10 COLONNES
-        # =====================================================================
-        # 1. On concatène les lignes intérieures
-        updated_pix_df = pd.concat([grid_points, stn_points_raw], ignore_index=True)
-        
-        # 2. Sécurité : On force l'alignement exact selon l'en-tête d'origine
-        # (idx en colonne 1 ... et name en colonne 10 à sa place)
-        updated_pix_df = updated_pix_df[columns_structure]
-        
-        # 3. Écriture physique propre sur le disque
-        updated_pix_df.to_csv(pixel_args_path, sep=' ', header=False, index=False)
-        #print(f"💾 {pixel_args_path.name} synchronisé avec succès (Structure 10-colonnes respectée).")
-        # =====================================================================
 
         # Tracé des points filtrés
         ax.scatter(grid_points['lon'], grid_points['lat'], s=20, c='cyan', label='Grid', zorder=3)
@@ -319,64 +308,77 @@ def plot_pix_coordinates(country, country_iso, rndta):
         adm0.plot(ax=ax, facecolor="#B7A9CD", edgecolor='black', linewidth=2, alpha=0.4, zorder=2)
         adm1.plot(ax=ax, facecolor='none', edgecolor='black', linewidth=0.5, zorder=2)
 
-        ax.set_xlim(lon1, lon2)
-        ax.set_ylim(lat1, lat2)
-        ax.legend()
-
     except Exception as e:
         print(f"Error processing geographical coordinates : {e}")
         import traceback
         traceback.print_exc()
 
-    # --- Configuration finale du graphique ---
+    # --- Configuration finale des limites cartographiques ---
     ax.set_xlim(lon1, lon2)
     ax.set_ylim(lat1, lat2)
-
-    #ax.xaxis.set_major_locator(ticker.MultipleLocator(10)) 
-    #ax.yaxis.set_major_locator(ticker.MultipleLocator(10)) 
 
     ax.xaxis.set_major_locator(ticker.MaxNLocator(nbins=6, steps=[1, 2, 5, 10]))
     ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=6, steps=[1, 2, 5, 10]))
 
     ax.set_xlabel('E', fontweight='bold')
     ax.set_ylabel('N', fontweight='bold')
-
     ax.set_title(f"Validation Grille et Stations - {line[0]}")
     ax.grid(True, linestyle='--', alpha=0.8)
-    plt.legend()
+    ax.legend()
 
-    # --- Capture des coordonnées Pixels (Pour la carte HTML) ---
+    # =====================================================================
+    # CALCUL DYNAMIQUE ET EXACT DES COORDONNÉES PIXELS VIA MATPLOTLIB
+    # =====================================================================
+    
+    # 1. Mise à jour des coordonnées pixels réelles pour la Grille
+    for idx_row, row in grid_points.iterrows():
+        px_x, px_y = get_exact_pixels(row['lat'], row['lon'], ax, fig)
+        grid_points.at[idx_row, 'px_x'] = f"{px_x:.4f}"
+        grid_points.at[idx_row, 'px_y'] = f"{px_y:.4f}"
+
+    # 2. Mise à jour des coordonnées pixels réelles pour les Stations
+    for idx_row, row in stn_points.iterrows():
+        px_x, px_y = get_exact_pixels(row['lat'], row['lon'], ax, fig)
+        stn_points.at[idx_row, 'px_x'] = f"{px_x:.4f}"
+        stn_points.at[idx_row, 'px_y'] = f"{px_y:.4f}"
+
+    # =====================================================================
+    # SAUVEGARDE DU FICHIER TEXTE SYNCHRONISÉ
+    # =====================================================================
+    updated_pix_df = pd.concat([grid_points, stn_points], ignore_index=True)
+    updated_pix_df = updated_pix_df[columns_structure]
+    updated_pix_df.to_csv(pixel_args_path, sep=' ', header=False, index=False)
+
+    # --- Capture des coordonnées Pixels pour la carte HTML ---
     html_areas_list = []
     period = [7, 10, 30, 60, 90, 180]
     formatted_areas = {}
     
     for prd in period:
         for _, row in grid_points.iterrows():
-            px_x, px_y = get_exact_pixels(row['lat'], row['lon'], ax, fig)
+            px_x, px_y = float(row['px_x']), float(row['px_y'])
             area = f'<area href="{row["idx"]}_{prd}.png" shape="circle" coords="{px_x:.2f},{px_y:.2f},5" title="Lat:{row["lat"]:.2f}°N, Lon:{row["lon"]:.2f}°E">'
             html_areas_list.append(area)
 
         for _, row in stn_points.iterrows():
-            px_x, px_y = get_exact_pixels(row['lat'], row['lon'], ax, fig)
-            name_stn = row.get('name', row['name'])
+            px_x, px_y = float(row['px_x']), float(row['px_y'])
+            name_stn = row['name']
             area = f'<area href="{row["idx"]}_{prd}.png" shape="circle" coords="{px_x:.2f},{px_y:.2f},5" title="{name_stn}: {row["lat"]:.2f}°N, {row["lon"]:.2f}°E ">'
             html_areas_list.append(area)
 
-        format_txt = "\n".join(html_areas_list)
+        formatted_areas[str(prd)] = "\n".join(html_areas_list)
         html_areas_list = []
-        formatted_areas[str(prd)] = format_txt
         
+    # --- Sauvegardes Physiques ---
     ts_path = (Path(__file__).resolve().parents[1] / "data" / "ts_maps" / f"{country}" / rndta).resolve()
     ts_path.mkdir(parents=True, exist_ok=True)
     
     filename = f"{country}_grid.png"
     full_save_path = ts_path / filename
     
-    #print(f"🚀 Tentative de sauvegarde dans : {full_save_path}")
-    plt.savefig(full_save_path, dpi=100) 
+    # plt.savefig respectera EXACTEMENT le canevas évalué par transData
+    plt.savefig(full_save_path, dpi=100, bbox_inches=None) 
     plt.close(fig) 
     
-    #print(f"✅ Image sauvegardée avec succès !")
     with open(base_data / f"formatted_areas_{country}.json", "w", encoding="utf-8") as f:
         json.dump(formatted_areas, f, indent=4, ensure_ascii=False)
-        f.close()
