@@ -136,8 +136,8 @@ def generate_pixel_arguments(
                 'lon_min': f"{(lon_r - dtarsl):.2f}",
                 'lon_max': f"{(lon_r + dtarsl):.2f}",
 
-                'px_x': f"{px_x:.2f}",
-                'px_y': f"{px_y:.2f}",
+                'px_x': f"{px_x:.4f}",
+                'px_y': f"{px_y:.4f}",
 
                 'type': 'grid'
             })
@@ -177,8 +177,8 @@ def generate_pixel_arguments(
                 'lon_min': f"{(s_lon - dtarsl):.2f}",
                 'lon_max': f"{(s_lon + dtarsl):.2f}",
 
-                'px_x': f"{px_x:.2f}",
-                'px_y': f"{px_y:.2f}",
+                'px_x': f"{px_x:.4f}",
+                'px_y': f"{px_y:.4f}",
 
                 'type': name
             })
