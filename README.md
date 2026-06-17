@@ -15,13 +15,14 @@ Open your Anaconda Prompt or Miniconda Terminal and execute the following comman
 
 ```bash
 conda create -c conda-forge -c hallkjc01 -n pycmt_env xcast xarray netcdf4 matplotlib cartopy cfgrib jupyter ipykernel -y
+```
 
 # Step 2: Activate the Environment
 Once the installation is complete, activate your newly created environment:
 
-` ```bash
+```bash
 conda activate pycmt_env
-`
+```
 
 # Step 3: Register the Kernel for Jupyter Notebooks
 To use this environment inside Jupyter Notebooks, register it as a custom Python kernel:
