@@ -26,14 +26,14 @@ conda activate pycmt_env
 
 # Step 3: Register the Kernel for Jupyter Notebooks
 To use this environment inside Jupyter Notebooks, register it as a custom Python kernel:
-` ```bash
+```bash
 python -m ipykernel install --user --name=pycmt_env
-`
+```
 # Step 4: Install PyCMT Package
 Install the latest development version of PyCMT directly from the GitHub repository using pip:
-` ```bash
+```bash
 pip install git+https://github.com/elmamounedieye/pycmt.git
-`
+```
 
 
 ### This version puts the focus only on AFRICA.
