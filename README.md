@@ -13,23 +13,27 @@ Make sure you have Miniconda or Anaconda installed on your system.
 # Step 1: Create the Conda Environment
 Open your Anaconda Prompt or Miniconda Terminal and execute the following command to create the environment with all necessary geospatial and meteorological packages:
 
+` ```bash
 conda create -c conda-forge -c hallkjc01 -n pycmt_env xcast xarray netcdf4 matplotlib cartopy cfgrib jupyter ipykernel -y
+`
 
 # Step 2: Activate the Environment
 Once the installation is complete, activate your newly created environment:
 
+` ```bash
 conda activate pycmt_env
+`
 
 # Step 3: Register the Kernel for Jupyter Notebooks
 To use this environment inside Jupyter Notebooks, register it as a custom Python kernel:
-
+` ```bash
 python -m ipykernel install --user --name=pycmt_env
-
+`
 # Step 4: Install PyCMT Package
 Install the latest development version of PyCMT directly from the GitHub repository using pip:
-
+` ```bash
 pip install git+https://github.com/elmamounedieye/pycmt.git
-
+`
 
 
 ### This version puts the focus only on AFRICA.
