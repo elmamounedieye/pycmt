@@ -2,20 +2,18 @@ name: pycmt_env
 channels:
   - conda-forge
 dependencies:
-  # Core language and notebook integration
   - python=3.11
   - jupyter
   - ipykernel
-  
-  # Geospatial & Data stack (conda-forge handles the heavy external binaries)
   - xcast
-  - xarray
-  - netcdf4
-  - matplotlib
+  - cdo
   - cartopy
   - cfgrib
-  
-  # Pip section to install your package cleanly
+  - pyogrio
+  - rasterio
+  - rioxarray
+  - netcdf4
   - pip
   - pip:
-    - git+https://github.com/elmamounedieye/pycmt.git
+    # Points directly back to your repo to pull the pyproject.toml info
+    - git+https://github.com/elmamounedieye/pycmt.git@main
