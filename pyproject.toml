@@ -10,36 +10,37 @@ authors = [
     {name = "Mouhamed El Mamoune Dieye"}
 ]
 
+requires-python = ">=3.10,<3.14"
+
 dependencies = [
     "affine",
-    "Cartopy",
+    "Cartopy>=0.23.0",            
     "cdo",
     "cftime",
-    "dask",
-    "geopandas",
+    "dask>=2024.1.0",             
+    "geopandas>=0.14.0",           
     "ipywidgets",
     "widgetsnbextension",
     "Jinja2",
-    "matplotlib",
-    "netCDF4",
-    "numba",
-    "numpy",
+    "matplotlib>=3.8.0",           
+    "netCDF4>=1.6.5",
+    "numba>=0.59.0",               
+    "numpy>=1.26.0",               
     "openpyxl",
-    "pandas",
-    "pyogrio",
-    "pyproj",
+    "pandas>=2.1.0",
+    "pyogrio>=0.7.2",             
+    "pyproj>=3.6.0",
     "pyshp",
     "PyYAML",
-    "rasterio",
+    "rasterio>=1.3.9",
     "requests",
-    "rioxarray",
-    "scipy",
-    "shapely",
+    "rioxarray>=0.15.0",
+    "scipy>=1.11.0",
+    "shapely>=2.0.2",             
     "uvicorn",
-    "xarray",
+    "xarray>=2023.11.0",
     "xgrads",
 ]
-
 #[project.scripts]
 #pycmt = "pycmt:climonitor"
 
