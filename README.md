@@ -46,7 +46,7 @@ Download this  "Test Notebook" to use the PyCMT https://github.com/elmamounediey
 
 # Kernel choice
 
-Choose "Python (cpc_pycmt_env)" kernel to run the notebook.
+Select "Python (cpc_pycmt_env)" kernel to run the notebook.
 
 
 ### You don't need to use the "run_upload" functionality for Senegal or Africa as area since the package integrates STATIONS' files for both.
