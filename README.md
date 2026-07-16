@@ -44,7 +44,7 @@ jupyter notebook
 
 Download this  "Test Notebook" to use the PyCMT https://github.com/elmamounedieye/pycmt/blob/adf33d16765cc05bbd792cb166d87c48e20dfefe/Test_notebook.ipynb.
 
-#Kernel choice
+# Kernel choice
 
 Choose "Python (cpc_pycmt_env)" kernel to run the notebook.
 
