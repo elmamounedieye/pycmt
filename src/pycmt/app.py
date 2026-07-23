@@ -3,6 +3,11 @@ from fastapi.responses import JSONResponse, FileResponse
 from pathlib import Path
 import shutil
 import pycmt
+import gc
+import matplotlib.pyplot as plt
+import ctypes
+import os
+
 
 # Réutilisation de tes fonctions de calcul pycmt
 from pycmt.core.downloader import (
@@ -38,6 +43,24 @@ RESOLUTION_CONFIG = {
 }
 
 # =========================================================================
+
+def clear_memory():
+
+    plt.close("all")
+
+    gc.collect()
+
+    try:
+        if os.name == "nt":
+            ctypes.windll.kernel32.SetProcessWorkingSetSize(
+                ctypes.windll.kernel32.GetCurrentProcess(),
+                -1,
+                -1
+            )
+    except Exception:
+        pass
+
+    print("🧹 Memory cleaned")
 # =========================================================================
 
 def pipeline_climonitor_complet(
@@ -66,11 +89,16 @@ def pipeline_climonitor_complet(
             shutil.copytree(source, destination, dirs_exist_ok=True)
         else:
             country_iso = get_country_iso(country)
+            clear_memory()
             download_gadm_country(country_iso)
+            clear_memory()
         
         run_workflow(country_iso, country)
+        clear_memory()
         generate_pixel_arguments(ts_rsl, country_iso, country)
+        clear_memory()
         plot_pix_coordinates(country, country_iso, rndta)
+        clear_memory()
         
         if rndta.lower() == "arc2":
             download_arc2_data()
@@ -78,40 +106,57 @@ def pipeline_climonitor_complet(
             download_rfe2()
         if rndta.lower()== "cmorph":
             download_cmorph_data()
+        clear_memory()
         
         plot_precip(rsl, RESOLUTION_CONFIG[rsl], country_iso, country, rndta)
+        clear_memory()
         generate_tseries(country_iso, country, rndta)
+        clear_memory()
         generate_html_map(country, rndta)
-        """
+        clear_memory()
         
         # --- Module SPP ---
         if run_spp:
             print(f"📥 Downloading and generating SPP for {country}...")
             download_spp_noaa("rfe2")
+            clear_memory()
             download_spp_noaa("cmorph")
+            clear_memory()
             run_orchestrator_spp(country, country_iso, "rfe2")
+            clear_memory()
             run_orchestrator_spp(country, country_iso, "cmorph")
             print(f"✅ SPP Done.")
-        """
+            clear_memory()
+        
         # --- Module SPI / Runoff / Soil Moisture ---
         if run_spi:
             print(f"📥 Downloading and generating SPI, Runoff and Soil Moisture for {country}...")
-            #download_runoff_data()
-            #download_xsm_data()
-            #download_spi("cmorph")
-            #download_spi("rfe2")
+            download_runoff_data()
+            clear_memory()
+            download_xsm_data()
+            clear_memory()
+            download_spi("cmorph")
+            clear_memory()
+            download_spi("rfe2")
+            clear_memory()
             generate_runoff(country_iso, country)
+            clear_memory()
             generate_soilmoisture(country_iso, country)
+            clear_memory()
             calc_spi(country_iso, country, "cmorph")
+            clear_memory()
             calc_spi(country_iso, country, "rfe2")
+            clear_memory()
             print(f"✅ SPI, Runoff and Soil Moisture Done.")
-        """
+        
         # --- Module VHI ---
         if run_vhi:
             print(f"📥 Donwloading and generating VHI for {country}...")
             run_retrieval_vhi()
+            clear_memory()
             do_vhi(country, country_iso)
-            print(f"✅ VHI Done.")"""
+            clear_memory()
+            print(f"✅ VHI Done.")
 
         build_country_dashboard(country, rndta)
         print(f"🎉 API pipeline successful for {country} ({rndta})")

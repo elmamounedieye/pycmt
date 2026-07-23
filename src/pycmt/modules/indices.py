@@ -621,7 +621,7 @@ def generate_spi(country_iso, country, rndta):
         os.makedirs(spi_dir)
     spi_dir = os.path.relpath(spi_dir)
     
-    output_dir = base_dir / "SPI" / "spi_maps" / f"{country}" / f"{rndta}"
+    output_dir = base_dir / "spi" / "spi_maps" / f"{country}" / f"{rndta}"
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
         

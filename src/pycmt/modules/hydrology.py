@@ -255,7 +255,7 @@ from shapely.validation import make_valid  # Blindage topologique anti-crash
 def generate_soilmoisture(country_iso, country):
     base_dir = Path(__file__).resolve().parents[1] / "data" 
     mask_path = base_dir / "gis_resources" / f"country_masks0p036" / "365dcal" / f"{country_iso}_mask.nc"
-    soilmoisture_dir = os.path.relpath(base_dir / "spi" / "data" / "soilmoisture")
+    soilmoisture_dir = os.path.relpath(base_dir / "spi" / "data" / "Soilmoisture")
     output_dir = base_dir / "spi" / "Soilmoisture_maps" / f"{country}"
     output_dir.mkdir(parents=True, exist_ok=True)
     
