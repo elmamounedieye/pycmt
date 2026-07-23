@@ -90,17 +90,25 @@ def dowload_all_data(rndta: str):
     elif rndta.lower() == "cmorph":
         download_cmorph_data()
 
+    gc.collect()
+
     print("📥 Downloading RFE2 SPP...")
     download_spp_noaa("rfe2")
+    gc.collect()
     print("📥 Downloading CMORPH SPP...")
     download_spp_noaa("cmorph")
+    gc.collect()
 
     print("📥 Downloading Runoff...")
     download_runoff_data()
+    gc.collect()
     print("📥 Downloading Soil Moisture...")
     download_xsm_data()
+    gc.collect()
     download_spi("cmorph")
+    gc.collect()
     download_spi("rfe2")
+    gc.collect()
 
     print("📥 Téléchargement VHI...")
     run_retrieval_vhi()
@@ -124,7 +132,8 @@ def plot_precip_ts(country: str, rndta: str, rsl, ts_rsl):
         print(f" country iso : {country_iso}")
         download_gadm_country(country_iso)
         print("✅ Downloading shapefile complete!")
-    
+
+    gc.collect()
     config = {
         0.036: '0p036', 0.0375: '0p0375', 0.25: '0p25',
         0.5: '0p5', 0.1: '0p1', 1.0: '1p0'
@@ -133,12 +142,17 @@ def plot_precip_ts(country: str, rndta: str, rsl, ts_rsl):
     
     # Process geometry masking grids
     run_workflow(country_iso, cleaned_country)
+    gc.collect()
     generate_pixel_arguments(ts_rsl, country_iso, cleaned_country)
+    gc.collect()
     plot_pix_coordinates(cleaned_country, country_iso, rndta)
+    gc.collect()
 
     # Generate spatial plots and tracking datasets
     plot_precip(rsl, config[rsl], country_iso, cleaned_country, rndta)
+    gc.collect()
     generate_tseries(country_iso, cleaned_country, rndta)
+    gc.collect()
     generate_html_map(cleaned_country, rndta)
     
     print("🎉 Spatial maps and time series complete.")
@@ -154,6 +168,7 @@ def generate_spp(country, country_iso):
     
     print("⚙️ Generating RFE2 SPP...")
     run_orchestrator_spp(cleaned_country, country_iso, "rfe2")
+    gc.collect()
     print("⚙️ Generating CMORPH SPP...")
     run_orchestrator_spp(cleaned_country, country_iso, "cmorph")
     print("✅ SPP complete.")
@@ -164,14 +179,17 @@ def generate_spp(country, country_iso):
 def generate_spis(country, country_iso):
     """Runs high-intensity hydrology models and builds historical SPI indices."""
     cleaned_country = clean_country_name(country)
-    
+    gc.collect()
     print("⚙️ Generating Runoff...")
     generate_runoff(country_iso, cleaned_country)
+    gc.collect()
     print("⚙️ Generating Soil Moisture...")
     generate_soilmoisture(country_iso, cleaned_country)
+    gc.collect()
     
     print("⚙️ Generating SPI CMORPH...")
     calc_spi(country_iso, cleaned_country, "cmorph")
+    gc.collect()
     print("⚙️ Generating SPI RFE2...")
     calc_spi(country_iso, cleaned_country, "rfe2")
     print("✅ SPI complete.")
@@ -194,4 +212,4 @@ def generate_dashboard(country, rndta):
     """Compiles the localized outputs into an interactive standalone HTML structure."""
     cleaned_country = clean_country_name(country)
     build_country_dashboard(cleaned_country, rndta)
-    gc.collect()
+    
