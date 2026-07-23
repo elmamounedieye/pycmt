@@ -39,7 +39,6 @@ dependencies = [
     "xarray",
     "xgrads",
 ]
-
 #[project.scripts]
 #pycmt = "pycmt:climonitor"
 
